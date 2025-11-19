@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema Seja Sua{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <!-- Left Side Menu -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>Seja Sua</h1>
+                <p class="subtitle">Sistema de Gestão</p>
+            </div>
+
+            <nav class="main-nav">
+                <ul>
+                    <li>
+                        <a href="{% url 'home' %}" class="{% block nav_home %}{% endblock %}">
+                            <span class="icon">🏠</span>
+                            <span>Página Inicial</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-section">
+                        <span class="section-title">Coleções</span>
+                    </li>
+                    <li>
+                        <a href="{% url 'store_collections:collections_list' %}" class="{% block nav_collections %}{% endblock %}">
+                            <span class="icon">👗</span>
+                            <span>Coleções</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'store_collections:pieces_list' %}" class="{% block nav_pieces %}{% endblock %}">
+                            <span class="icon">📏</span>
+                            <span>Peças</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'store_collections:fabrics_list' %}" class="{% block nav_fabrics %}{% endblock %}">
+                            <span class="icon">🧵</span>
+                            <span>Tecidos</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-section">
+                        <span class="section-title">Estoque</span>
+                    </li>
+                    <li>
+                        <a href="{% url 'inventory:inventory_list' %}" class="{% block nav_inventory %}{% endblock %}">
+                            <span class="icon">📦</span>
+                            <span>Peças em Estoque</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'inventory:accessories_list' %}" class="{% block nav_accessories %}{% endblock %}">
+                            <span class="icon">🔧</span>
+                            <span>Acessórios</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-section">
+                        <span class="section-title">Financeiro</span>
+                    </li>
+                    <li>
+                        <a href="/admin/finance/financeinflow/" class="{% block nav_finance_in %}{% endblock %}">
+                            <span class="icon">💰</span>
+                            <span>Entradas</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/finance/financeoutflow/" class="{% block nav_finance_out %}{% endblock %}">
+                            <span class="icon">💸</span>
+                            <span>Saídas</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/finance/predictedexpense/" class="{% block nav_predictions %}{% endblock %}">
+                            <span class="icon">🔮</span>
+                            <span>Previsões</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-section">
+                        <span class="section-title">Calendário</span>
+                    </li>
+                    <li>
+                        <a href="/admin/calendar_app/calendarevent/" class="{% block nav_calendar %}{% endblock %}">
+                            <span class="icon">📅</span>
+                            <span>Eventos</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-section">
+                        <span class="section-title">Estatísticas</span>
+                    </li>
+                    <li>
+                        <a href="/admin/sales_stats/salesdata/" class="{% block nav_sales %}{% endblock %}">
+                            <span class="icon">📊</span>
+                            <span>Dados de Vendas</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/sales_stats/salesforecast/" class="{% block nav_forecast %}{% endblock %}">
+                            <span class="icon">📈</span>
+                            <span>Previsão de Vendas</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-section">
+                        <span class="section-title">Marketing</span>
+                    </li>
+                    <li>
+                        <a href="/admin/marketing/marketingcampaign/" class="{% block nav_campaigns %}{% endblock %}">
+                            <span class="icon">📢</span>
+                            <span>Campanhas</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/marketing/socialmediapost/" class="{% block nav_social %}{% endblock %}">
+                            <span class="icon">📱</span>
+                            <span>Redes Sociais</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-section">
+                        <span class="section-title">Anotações</span>
+                    </li>
+                    <li>
+                        <a href="/admin/notes/note/" class="{% block nav_notes %}{% endblock %}">
+                            <span class="icon">📝</span>
+                            <span>Notas</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-section">
+                        <span class="section-title">Configurações</span>
+                    </li>
+                    <li>
+                        <a href="/admin/business_settings/" class="{% block nav_settings %}{% endblock %}">
+                            <span class="icon">⚙️</span>
+                            <span>Configurações</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/">
+                            <span class="icon">🔐</span>
+                            <span>Admin Django</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="page-header">
+                <h2>{% block page_title %}{% endblock %}</h2>
+                <div class="user-info">
+                    {% if user.is_authenticated %}
+                        <span>Olá, {{ user.username }}</span>
+                        <a href="{% url 'admin:logout' %}" class="btn-logout">Sair</a>
+                    {% endif %}
+                </div>
+            </header>
+
+            <div class="content">
+                {% block content %}
+                {% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

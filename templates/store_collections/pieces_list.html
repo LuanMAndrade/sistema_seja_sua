@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+
+{% block title %}Peças - Sistema Seja Sua{% endblock %}
+
+{% block nav_pieces %}active{% endblock %}
+
+{% block page_title %}Peças{% endblock %}
+
+{% block content %}
+<div class="page-actions">
+    <a href="{% url 'store_collections:piece_create' %}" class="btn">➕ Nova Peça</a>
+</div>
+
+<div class="stats-summary">
+    <div class="stat-card">
+        <span class="stat-value">{{ total_pieces }}</span>
+        <span class="stat-label">Peças Totais</span>
+    </div>
+</div>
+
+{% if pieces %}
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Coleção</th>
+                <th>Categoria</th>
+                <th>Tecido</th>
+                <th>Preço Venda</th>
+                <th>Custo Total</th>
+                <th>Margem</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for piece in pieces %}
+            <tr>
+                <td><strong>{{ piece.collection.name }}</strong></td>
+                <td>{{ piece.category.name }}</td>
+                <td>{{ piece.fabric.name }} - {{ piece.fabric.color }}</td>
+                <td>R$ {{ piece.sale_price }}</td>
+                <td>R$ {{ piece.total_cost }}</td>
+                <td>
+                    <span class="margin-value {% if piece.margin >= 30 %}good{% elif piece.margin >= 20 %}medium{% else %}low{% endif %}">
+                        {{ piece.margin|floatformat:1 }}%
+                    </span>
+                </td>
+                <td>
+                    <span class="status-badge status-{{ piece.status }}">
+                        {{ piece.get_status_display }}
+                    </span>
+                </td>
+                <td>
+                    <a href="{% url 'store_collections:piece_detail' piece.pk %}" class="btn-small">Ver Detalhes</a>
+                    <a href="{% url 'store_collections:piece_edit' piece.pk %}" class="btn-small btn-secondary">Editar</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <p>Nenhuma peça cadastrada ainda.</p>
+    <a href="{% url 'store_collections:piece_create' %}" class="btn">➕ Criar Primeira Peça</a>
+</div>
+{% endif %}
+
+<style>
+.page-actions {
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.stats-summary {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--white);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--beige-medium);
+    text-align: center;
+    min-width: 150px;
+}
+
+.stat-card .stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--brown-dark);
+}
+
+.stat-card .stat-label {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--brown-text);
+    margin-top: 0.5rem;
+}
+
+.table-container {
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--beige-medium);
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table thead {
+    background: var(--beige-medium);
+}
+
+.data-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--brown-dark);
+    white-space: nowrap;
+}
+
+.data-table tbody tr {
+    border-bottom: 1px solid var(--beige-light);
+}
+
+.data-table tbody tr:hover {
+    background: var(--beige-light);
+}
+
+.data-table td {
+    padding: 1rem;
+    color: var(--brown-text);
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-approved {
+    background: #d4edda;
+    color: #155724;
+}
+
+.margin-value {
+    font-weight: 600;
+}
+
+.margin-value.good {
+    color: #155724;
+}
+
+.margin-value.medium {
+    color: #856404;
+}
+
+.margin-value.low {
+    color: #721c24;
+}
+
+.btn-small {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    background: var(--accent-gold);
+    color: var(--brown-dark);
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    margin-right: 0.5rem;
+}
+
+.btn-small:hover {
+    background: var(--brown-dark);
+    color: var(--white);
+}
+
+.btn-small.btn-secondary {
+    background: var(--beige-medium);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--beige-medium);
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+    color: var(--brown-text);
+    margin-bottom: 1.5rem;
+}
+</style>
+{% endblock %}

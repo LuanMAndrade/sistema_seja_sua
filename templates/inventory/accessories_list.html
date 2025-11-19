@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block title %}Acessórios - Sistema Seja Sua{% endblock %}
+
+{% block nav_accessories %}active{% endblock %}
+
+{% block page_title %}Acessórios de Estoque{% endblock %}
+
+{% block content %}
+<div class="page-actions">
+    <a href="/admin/inventory/inventoryaccessory/add/" class="btn">&#10133; Novo Acessório</a>
+</div>
+
+<div class="stats-summary">
+    <div class="stat-card">
+        <span class="stat-value">{{ total_accessories }}</span>
+        <span class="stat-label">Acessórios Cadastrados</span>
+    </div>
+</div>
+
+{% if accessories %}
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Quantidade Mínima</th>
+                <th>Preço</th>
+                <th>Prazo de Entrega</th>
+                <th>Criado em</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for accessory in accessories %}
+            <tr>
+                <td><strong>{{ accessory.name }}</strong></td>
+                <td>{{ accessory.minimum_quantity }} un.</td>
+                <td>R$ {{ accessory.price|floatformat:2 }}</td>
+                <td>{{ accessory.delivery_time_days }} dias úteis</td>
+                <td>{{ accessory.created_at|date:"d/m/Y" }}</td>
+                <td>
+                    <a href="/admin/inventory/inventoryaccessory/{{ accessory.pk }}/change/" class="btn-small">Editar</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">&#128295;</div>
+    <p>Nenhum acessório cadastrado ainda.</p>
+    <p class="empty-hint">Cadastre acessórios para gerenciar o estoque de materiais complementares.</p>
+    <a href="/admin/inventory/inventoryaccessory/add/" class="btn">&#10133; Cadastrar Primeiro Acessório</a>
+</div>
+{% endif %}
+
+<style>
+.page-actions {
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.stats-summary {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--white);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--beige-medium);
+    text-align: center;
+    min-width: 150px;
+}
+
+.stat-card .stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--brown-dark);
+}
+
+.stat-card .stat-label {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--brown-text);
+    margin-top: 0.5rem;
+}
+
+.table-container {
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--beige-medium);
+    overflow: hidden;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table thead {
+    background: var(--beige-medium);
+}
+
+.data-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--brown-dark);
+}
+
+.data-table tbody tr {
+    border-bottom: 1px solid var(--beige-light);
+}
+
+.data-table tbody tr:hover {
+    background: var(--beige-light);
+}
+
+.data-table td {
+    padding: 1rem;
+    color: var(--brown-text);
+}
+
+.btn {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    background: var(--accent-gold);
+    color: var(--brown-dark);
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    background: var(--brown-dark);
+    color: var(--white);
+}
+
+.btn-small {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    background: var(--accent-gold);
+    color: var(--brown-dark);
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    margin-right: 0.5rem;
+}
+
+.btn-small:hover {
+    background: var(--brown-dark);
+    color: var(--white);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--beige-medium);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+    color: var(--brown-text);
+    margin-bottom: 0.5rem;
+}
+
+.empty-hint {
+    font-size: 0.9rem;
+    color: #999;
+    margin-bottom: 1.5rem;
+}
+</style>
+{% endblock %}

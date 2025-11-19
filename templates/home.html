@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+
+{% block title %}Página Inicial - Sistema Seja Sua{% endblock %}
+
+{% block nav_home %}active{% endblock %}
+
+{% block page_title %}Página Inicial{% endblock %}
+
+{% block content %}
+<div class="welcome-section">
+    <h3>Bem-vindo ao Sistema de Gestão Seja Sua</h3>
+    <p>
+        Sistema completo para gerenciamento de coleções, estoque, finanças, calendário e marketing.
+        Navegue pelos módulos abaixo para acessar cada área do sistema.
+    </p>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Collections Module -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-icon">👗</span>
+            <h3 class="card-title">Coleções</h3>
+        </div>
+        <div class="card-body">
+            <p class="card-description">
+                Gerencie suas coleções de roupas, peças, tecidos e acessórios.
+                Acompanhe o status de produção e modelagem.
+            </p>
+            <div class="stats-row">
+                <div class="stat-item">
+                    <span class="stat-value">{{ collections_count }}</span>
+                    <span class="stat-label">Coleções</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ pieces_count }}</span>
+                    <span class="stat-label">Peças</span>
+                </div>
+            </div>
+            <div class="card-action">
+                <a href="/admin/store_collections/collection/" class="btn">Acessar Coleções</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Module -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-icon">📦</span>
+            <h3 class="card-title">Estoque</h3>
+        </div>
+        <div class="card-body">
+            <p class="card-description">
+                Controle de inventário sincronizado com o Tiny ERP.
+                Acompanhe peças, acessórios e embalagens.
+            </p>
+            <div class="stats-row">
+                <div class="stat-item">
+                    <span class="stat-value">{{ inventory_pieces_count }}</span>
+                    <span class="stat-label">Peças</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ inventory_accessories_count }}</span>
+                    <span class="stat-label">Acessórios</span>
+                </div>
+            </div>
+            <div class="card-action">
+                <a href="/admin/inventory/inventorypiece/" class="btn">Ver Estoque</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Finance Module -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-icon">💰</span>
+            <h3 class="card-title">Finanças</h3>
+        </div>
+        <div class="card-body">
+            <p class="card-description">
+                Controle financeiro completo com entradas, saídas e previsões.
+                Dados sincronizados com o Tiny ERP.
+            </p>
+            <div class="stats-row">
+                <div class="stat-item">
+                    <span class="stat-value">{{ inflows_count }}</span>
+                    <span class="stat-label">Entradas</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ outflows_count }}</span>
+                    <span class="stat-label">Saídas</span>
+                </div>
+            </div>
+            <div class="card-action">
+                <a href="/admin/finance/financeinflow/" class="btn">Ver Finanças</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Module -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-icon">📅</span>
+            <h3 class="card-title">Calendário</h3>
+        </div>
+        <div class="card-body">
+            <p class="card-description">
+                Calendário de eventos integrado com Google Calendar.
+                Acompanhe prazos de produção e lançamentos.
+            </p>
+            <div class="stats-row">
+                <div class="stat-item">
+                    <span class="stat-value">{{ upcoming_events_count }}</span>
+                    <span class="stat-label">Próximos Eventos</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ total_events_count }}</span>
+                    <span class="stat-label">Total</span>
+                </div>
+            </div>
+            <div class="card-action">
+                <a href="/admin/calendar_app/calendarevent/" class="btn">Ver Calendário</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Module -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-icon">📊</span>
+            <h3 class="card-title">Estatísticas</h3>
+        </div>
+        <div class="card-body">
+            <p class="card-description">
+                Análise de vendas e previsões baseadas em dados históricos.
+                Estatísticas por peça, coleção e tecido.
+            </p>
+            <div class="stats-row">
+                <div class="stat-item">
+                    <span class="stat-value">{{ sales_data_count }}</span>
+                    <span class="stat-label">Vendas</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ forecasts_count }}</span>
+                    <span class="stat-label">Previsões</span>
+                </div>
+            </div>
+            <div class="card-action">
+                <a href="/admin/sales_stats/salesdata/" class="btn">Ver Estatísticas</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Marketing Module -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-icon">📢</span>
+            <h3 class="card-title">Marketing</h3>
+        </div>
+        <div class="card-body">
+            <p class="card-description">
+                Gerencie campanhas de marketing e posts de redes sociais.
+                Planeje lançamentos e promoções.
+            </p>
+            <div class="stats-row">
+                <div class="stat-item">
+                    <span class="stat-value">{{ campaigns_count }}</span>
+                    <span class="stat-label">Campanhas</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ social_posts_count }}</span>
+                    <span class="stat-label">Posts</span>
+                </div>
+            </div>
+            <div class="card-action">
+                <a href="/admin/marketing/marketingcampaign/" class="btn">Ver Marketing</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notes Module -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-icon">📝</span>
+            <h3 class="card-title">Anotações</h3>
+        </div>
+        <div class="card-body">
+            <p class="card-description">
+                Faça anotações rápidas com salvamento automático.
+                Organize ideias e lembretes importantes.
+            </p>
+            <div class="stats-row">
+                <div class="stat-item">
+                    <span class="stat-value">{{ notes_count }}</span>
+                    <span class="stat-label">Notas</span>
+                </div>
+            </div>
+            <div class="card-action">
+                <a href="/admin/notes/note/" class="btn">Ver Notas</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Module -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-icon">⚙️</span>
+            <h3 class="card-title">Configurações</h3>
+        </div>
+        <div class="card-body">
+            <p class="card-description">
+                Configure fornecedores, categorias de peças e prazos padrão.
+                Personalize o sistema de acordo com suas necessidades.
+            </p>
+            <div class="card-action">
+                <a href="/admin/business_settings/" class="btn">Configurações</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
