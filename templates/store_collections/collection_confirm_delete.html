@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir Coleção - Sistema Seja Sua{% endblock %}
+
+{% block nav_collections %}active{% endblock %}
+
+{% block page_title %}Excluir Coleção{% endblock %}
+
+{% block content %}
+<div class="delete-confirmation">
+    <div class="warning-box">
+        <h2>⚠️ Atenção!</h2>
+        <p>Você está prestes a excluir a coleção <strong>"{{ collection.name }}"</strong>.</p>
+
+        <div class="impact-summary">
+            <h3>O que será excluído:</h3>
+            <ul>
+                <li>✗ A coleção <strong>{{ collection.name }}</strong></li>
+                <li>✗ <strong>{{ pieces_count }}</strong> peça(s) relacionada(s)</li>
+                <li>✗ <strong>{{ events_count }}</strong> evento(s) do calendário</li>
+                <li>✗ Todas as cores e imagens das peças</li>
+            </ul>
+        </div>
+
+        <p class="warning-text">
+            <strong>Esta ação não pode ser desfeita!</strong>
+        </p>
+    </div>
+
+    <div class="action-buttons">
+        <form method="post" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+                🗑️ Sim, Excluir Coleção
+            </button>
+        </form>
+        <a href="{% url 'store_collections:collections_list' %}" class="btn btn-secondary">
+            ← Cancelar
+        </a>
+    </div>
+</div>
+
+<style>
+.delete-confirmation {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.warning-box {
+    background: var(--white);
+    border: 2px solid #dc3545;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.warning-box h2 {
+    color: #dc3545;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.warning-box p {
+    color: var(--brown-text);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.impact-summary {
+    background: #f8f9fa;
+    border-left: 4px solid #dc3545;
+    padding: 1rem;
+    margin: 1.5rem 0;
+}
+
+.impact-summary h3 {
+    color: var(--brown-dark);
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.impact-summary ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.impact-summary li {
+    padding: 0.5rem 0;
+    color: var(--brown-text);
+    font-size: 0.95rem;
+}
+
+.warning-text {
+    color: #dc3545;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: var(--white);
+}
+
+.btn-danger:hover {
+    background: #c82333;
+    transform: scale(1.02);
+}
+
+.btn-secondary {
+    background: var(--beige-medium);
+    color: var(--brown-dark);
+}
+
+.btn-secondary:hover {
+    background: var(--brown-dark);
+    color: var(--white);
+}
+</style>
+{% endblock %}

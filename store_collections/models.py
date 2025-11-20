@@ -19,20 +19,6 @@ class Fabric(models.Model):
         return f"{self.name} - {self.color}"
 
 
-class Accessory(models.Model):
-    """Accessories for pieces"""
-    name = models.CharField(max_length=200)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['name']
-        verbose_name_plural = "Accessories"
-
-    def __str__(self):
-        return self.name
-
-
 class Collection(models.Model):
     """Clothing collections"""
     STATUS_CHOICES = [
@@ -84,6 +70,7 @@ class Piece(models.Model):
         ('GG', 'GG'),
     ]
 
+    name = models.CharField(max_length=200, verbose_name="Nome", default='Sem Nome', blank=True)
     collection = models.ForeignKey(Collection, on_delete=models.CASCADE, related_name='pieces')
     category = models.ForeignKey(PieceCategory, on_delete=models.PROTECT)
     fabric = models.ForeignKey(Fabric, on_delete=models.PROTECT)
@@ -103,7 +90,24 @@ class Piece(models.Model):
     initial_quantity_g = models.PositiveIntegerField(default=0, verbose_name="Initial Quantity G")
     initial_quantity_gg = models.PositiveIntegerField(default=0, verbose_name="Initial Quantity GG")
 
-    accessories = models.ManyToManyField(Accessory, blank=True, related_name='pieces')
+    # Tiny ERP Integration
+    tiny_erp_piece = models.ForeignKey(
+        'inventory.InventoryPiece',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='linked_pieces',
+        help_text="Link to Tiny ERP inventory piece for stock sync"
+    )
+
+    # Current stock (synced from Tiny ERP)
+    current_stock_p = models.PositiveIntegerField(default=0, verbose_name="Current Stock P")
+    current_stock_m = models.PositiveIntegerField(default=0, verbose_name="Current Stock M")
+    current_stock_g = models.PositiveIntegerField(default=0, verbose_name="Current Stock G")
+    current_stock_gg = models.PositiveIntegerField(default=0, verbose_name="Current Stock GG")
+    stock_last_synced = models.DateTimeField(null=True, blank=True, help_text="Last time stock was synced from Tiny ERP")
+
+    accessories = models.ManyToManyField('inventory.InventoryAccessory', blank=True, related_name='pieces')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -112,7 +116,7 @@ class Piece(models.Model):
         ordering = ['collection', 'category']
 
     def __str__(self):
-        return f"{self.collection.name} - {self.category}"
+        return f"{self.name} ({self.collection.name})"
 
     @property
     def margin(self):
@@ -130,6 +134,21 @@ class Piece(models.Model):
             self.initial_quantity_g +
             self.initial_quantity_gg
         )
+
+    @property
+    def total_current_stock(self):
+        """Total current stock across all sizes"""
+        return (
+            self.current_stock_p +
+            self.current_stock_m +
+            self.current_stock_g +
+            self.current_stock_gg
+        )
+
+    @property
+    def is_synced_with_tiny(self):
+        """Check if this piece is linked to Tiny ERP"""
+        return self.tiny_erp_piece is not None
 
 
 class PieceColor(models.Model):

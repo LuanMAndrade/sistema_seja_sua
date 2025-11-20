@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+
+{% block title %}Estoque - Sistema Seja Sua{% endblock %}
+
+{% block nav_inventory %}active{% endblock %}
+
+{% block page_title %}Controle de Estoque{% endblock %}
+
+{% block content %}
+<div class="page-actions">
+    <button type="button" id="sync_all_btn" class="btn">🔄 Sincronizar Todos os Estoques</button>
+</div>
+
+<div class="stats-summary">
+    <div class="stat-card">
+        <span class="stat-value">{{ total_pieces }}</span>
+        <span class="stat-label">Peças Cadastradas</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">{{ synced_pieces }}</span>
+        <span class="stat-label">Vinculadas ao Tiny</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">{{ total_stock }}</span>
+        <span class="stat-label">Total em Estoque</span>
+    </div>
+</div>
+
+{% if pieces %}
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Coleção</th>
+                <th>Categoria</th>
+                <th>Tecido</th>
+                <th>Vinculado Tiny</th>
+                <th>P</th>
+                <th>M</th>
+                <th>G</th>
+                <th>GG</th>
+                <th>Total</th>
+                <th>Última Sync</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for piece in pieces %}
+            <tr>
+                <td><strong>{{ piece.collection.name }}</strong></td>
+                <td>{{ piece.category }}</td>
+                <td>{{ piece.fabric.name }}</td>
+                <td>
+                    {% if piece.is_synced_with_tiny %}
+                    <span class="badge badge-success">✓ {{ piece.tiny_erp_piece.name }}</span>
+                    {% else %}
+                    <span class="badge badge-warning">✗ Não vinculado</span>
+                    {% endif %}
+                </td>
+                <td class="stock-cell">{{ piece.current_stock_p }}</td>
+                <td class="stock-cell">{{ piece.current_stock_m }}</td>
+                <td class="stock-cell">{{ piece.current_stock_g }}</td>
+                <td class="stock-cell">{{ piece.current_stock_gg }}</td>
+                <td class="stock-cell total-stock"><strong>{{ piece.total_current_stock }}</strong></td>
+                <td>
+                    {% if piece.stock_last_synced %}
+                    <small>{{ piece.stock_last_synced|date:"d/m/Y H:i" }}</small>
+                    {% else %}
+                    <small class="text-muted">Nunca</small>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'store_collections:piece_edit' piece.pk %}" class="btn-small">Editar</a>
+                    {% if piece.is_synced_with_tiny %}
+                    <button type="button" class="btn-small btn-sync" data-piece-id="{{ piece.pk }}">🔄 Sync</button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <p>Nenhuma peça cadastrada ainda.</p>
+    <a href="{% url 'store_collections:piece_create' %}" class="btn">➕ Criar Primeira Peça</a>
+</div>
+{% endif %}
+
+<div id="sync_messages"></div>
+
+<style>
+.page-actions {
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.stats-summary {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--white);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--beige-medium);
+    text-align: center;
+    flex: 1;
+}
+
+.stat-card .stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--brown-dark);
+}
+
+.stat-card .stat-label {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--brown-text);
+    margin-top: 0.5rem;
+}
+
+.table-container {
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--beige-medium);
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table thead {
+    background: var(--beige-medium);
+}
+
+.data-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--brown-dark);
+    white-space: nowrap;
+}
+
+.data-table tbody tr {
+    border-bottom: 1px solid var(--beige-light);
+}
+
+.data-table tbody tr:hover {
+    background: var(--beige-light);
+}
+
+.data-table td {
+    padding: 1rem;
+    color: var(--brown-text);
+}
+
+.stock-cell {
+    text-align: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.total-stock {
+    background: var(--beige-light);
+    color: var(--brown-dark);
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.badge-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.badge-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.btn-small {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    background: var(--accent-gold);
+    color: var(--brown-dark);
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    margin-right: 0.5rem;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-small:hover {
+    background: var(--brown-dark);
+    color: var(--white);
+}
+
+.btn-small.btn-sync {
+    background: #28a745;
+    color: var(--white);
+}
+
+.btn-small.btn-sync:hover {
+    background: #218838;
+}
+
+.text-muted {
+    color: #6c757d;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--beige-medium);
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+    color: var(--brown-text);
+    margin-bottom: 1.5rem;
+}
+
+#sync_messages .message {
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 6px;
+    border-left: 4px solid;
+}
+
+#sync_messages .message.success {
+    background: #d4edda;
+    color: #155724;
+    border-color: #28a745;
+}
+
+#sync_messages .message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border-color: #dc3545;
+}
+
+#sync_messages .message.info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border-color: #17a2b8;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const syncButtons = document.querySelectorAll('.btn-sync');
+    const syncAllBtn = document.getElementById('sync_all_btn');
+    const messagesDiv = document.getElementById('sync_messages');
+
+    // Sync individual piece
+    syncButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const pieceId = this.getAttribute('data-piece-id');
+            syncPiece(pieceId, this);
+        });
+    });
+
+    // Sync all pieces
+    if (syncAllBtn) {
+        syncAllBtn.addEventListener('click', function() {
+            syncAll(this);
+        });
+    }
+
+    function syncPiece(pieceId, button) {
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = '⏳ Sincronizando...';
+
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch(`/collections/api/sync-piece/${pieceId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            button.disabled = false;
+            button.textContent = originalText;
+
+            if (data.success) {
+                showMessage(`✓ ${data.message}`, 'success');
+                // Reload page to show updated stock
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showMessage(`✗ ${data.error}`, 'error');
+            }
+        })
+        .catch(error => {
+            button.disabled = false;
+            button.textContent = originalText;
+            showMessage('✗ Erro na requisição: ' + error.message, 'error');
+        });
+    }
+
+    function syncAll(button) {
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = '⏳ Sincronizando todos...';
+
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch('/collections/api/sync-all-pieces/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            button.disabled = false;
+            button.textContent = originalText;
+
+            if (data.success) {
+                showMessage(`✓ Sincronização concluída: ${data.synced} peça(s) sincronizada(s)`, 'success');
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                showMessage(`✗ ${data.error}`, 'error');
+            }
+        })
+        .catch(error => {
+            button.disabled = false;
+            button.textContent = originalText;
+            showMessage('✗ Erro na requisição: ' + error.message, 'error');
+        });
+    }
+
+    function showMessage(text, type) {
+        messagesDiv.innerHTML = '';
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
+        messageDiv.textContent = text;
+        messagesDiv.appendChild(messageDiv);
+    }
+});
+</script>
+{% endblock %}

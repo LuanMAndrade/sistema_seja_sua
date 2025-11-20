@@ -82,9 +82,18 @@ class CollectionForm(forms.ModelForm):
 class PieceForm(forms.ModelForm):
     """Formulário para criar/editar peças"""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Customizar o queryset do campo tiny_erp_piece para mostrar melhor informação
+        from inventory.models import InventoryPiece
+        self.fields['tiny_erp_piece'].queryset = InventoryPiece.objects.all().order_by('name')
+        self.fields['tiny_erp_piece'].required = False
+        self.fields['tiny_erp_piece'].empty_label = "--- Selecione uma peça do Tiny ERP (opcional) ---"
+
     class Meta:
         model = Piece
         fields = [
+            'name',
             'collection',
             'category',
             'fabric',
@@ -100,8 +109,13 @@ class PieceForm(forms.ModelForm):
             'initial_quantity_g',
             'initial_quantity_gg',
             'accessories',
+            'tiny_erp_piece',
         ]
         widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Nome da Peça'
+            }),
             'collection': forms.Select(attrs={'class': 'form-select'}),
             'category': forms.Select(attrs={'class': 'form-select'}),
             'fabric': forms.Select(attrs={'class': 'form-select'}),
@@ -152,9 +166,16 @@ class PieceForm(forms.ModelForm):
                 'class': 'form-input',
                 'placeholder': 'Quantidade'
             }),
-            'accessories': forms.CheckboxSelectMultiple(),
+            'accessories': forms.SelectMultiple(attrs={
+                'class': 'form-select-multiple',
+                'size': '8'
+            }),
+            'tiny_erp_piece': forms.Select(attrs={
+                'class': 'form-select',
+            }),
         }
         labels = {
+            'name': 'Nome da Peça',
             'collection': 'Coleção',
             'category': 'Categoria',
             'fabric': 'Tecido',
@@ -170,4 +191,9 @@ class PieceForm(forms.ModelForm):
             'initial_quantity_g': 'Quantidade Inicial - G',
             'initial_quantity_gg': 'Quantidade Inicial - GG',
             'accessories': 'Acessórios',
+            'tiny_erp_piece': 'Vincular com Peça do Tiny ERP (para sincronização de estoque)',
+        }
+        help_texts = {
+            'accessories': 'Segure Ctrl (Windows/Linux) ou Cmd (Mac) para selecionar múltiplos acessórios',
+            'tiny_erp_piece': 'Selecione uma peça do Tiny ERP para sincronizar o estoque automaticamente',
         }

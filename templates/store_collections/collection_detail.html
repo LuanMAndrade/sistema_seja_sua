@@ -1,0 +1,430 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ collection.name }} - Sistema Seja Sua{% endblock %}
+
+{% block nav_collections %}active{% endblock %}
+
+{% block page_title %}{{ collection.name }}{% endblock %}
+
+{% block content %}
+<div class="page-actions">
+    <a href="{% url 'store_collections:collections_list' %}" class="btn btn-secondary">← Voltar</a>
+    <a href="{% url 'store_collections:collection_edit' collection.pk %}" class="btn btn-primary">✏️ Editar</a>
+    <a href="{% url 'store_collections:collection_delete' collection.pk %}" class="btn btn-danger">🗑️ Excluir</a>
+</div>
+
+<div class="collection-info">
+    <div class="info-card">
+        <div class="info-row">
+            <span class="info-label">Status:</span>
+            <span class="status-badge status-{{ collection.status }}">
+                {{ collection.get_status_display }}
+            </span>
+        </div>
+
+        <div class="info-row">
+            <span class="info-label">Data Prevista de Lançamento:</span>
+            <span class="info-value">
+                {% if collection.expected_launch_date %}
+                    {{ collection.expected_launch_date|date:"d/m/Y" }}
+                {% else %}
+                    Não definida
+                {% endif %}
+            </span>
+        </div>
+
+        <div class="info-row">
+            <span class="info-label">Data Real de Lançamento:</span>
+            <span class="info-value">
+                {% if collection.actual_launch_date %}
+                    {{ collection.actual_launch_date|date:"d/m/Y" }}
+                {% else %}
+                    Não lançada
+                {% endif %}
+            </span>
+        </div>
+
+        {% if collection.notes %}
+        <div class="info-row notes">
+            <span class="info-label">Observações:</span>
+            <p class="info-value">{{ collection.notes }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="info-card">
+        <h3>Prazos de Produção</h3>
+        <div class="deadlines-grid">
+            <div class="deadline-item">
+                <span class="deadline-label">Modelagem:</span>
+                <span class="deadline-value">{{ collection.modeling_time }} dias</span>
+            </div>
+            <div class="deadline-item">
+                <span class="deadline-label">Peça Piloto:</span>
+                <span class="deadline-value">{{ collection.pilot_piece_time }} dias</span>
+            </div>
+            <div class="deadline-item">
+                <span class="deadline-label">Peça Teste:</span>
+                <span class="deadline-value">{{ collection.test_piece_time }} dias</span>
+            </div>
+            <div class="deadline-item">
+                <span class="deadline-label">Produção:</span>
+                <span class="deadline-value">{{ collection.production_time }} dias</span>
+            </div>
+            <div class="deadline-item">
+                <span class="deadline-label">Preparação:</span>
+                <span class="deadline-value">{{ collection.preparation_time }} dias</span>
+            </div>
+            <div class="deadline-item">
+                <span class="deadline-label">Transporte:</span>
+                <span class="deadline-value">{{ collection.transportation_time }} dias</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="pieces-section">
+    <div class="section-header">
+        <h3>Peças da Coleção ({{ total_pieces }})</h3>
+        <a href="{% url 'store_collections:piece_create' %}" class="btn btn-primary">+ Nova Peça</a>
+    </div>
+
+    {% if pieces %}
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Categoria</th>
+                    <th>Tecido</th>
+                    <th>Preço Venda</th>
+                    <th>Custo Total</th>
+                    <th>Margem</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for piece in pieces %}
+                <tr>
+                    <td><strong>{{ piece.name }}</strong></td>
+                    <td>{{ piece.category.name }}</td>
+                    <td>{{ piece.fabric }}</td>
+                    <td>R$ {{ piece.sale_price|floatformat:2 }}</td>
+                    <td>R$ {{ piece.total_cost|floatformat:2 }}</td>
+                    <td>
+                        <span class="margin-badge {% if piece.margin >= 30 %}good{% elif piece.margin >= 15 %}medium{% else %}low{% endif %}">
+                            {{ piece.margin|floatformat:1 }}%
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge status-{{ piece.status }}">
+                            {{ piece.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'store_collections:piece_detail' piece.pk %}" class="btn-small">Ver</a>
+                        <a href="{% url 'store_collections:piece_edit' piece.pk %}" class="btn-small">Editar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>Nenhuma peça cadastrada nesta coleção ainda.</p>
+        <a href="{% url 'store_collections:piece_create' %}" class="btn btn-primary">+ Criar Primeira Peça</a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+:root {
+    --beige-light: #f5f1e8;
+    --beige-medium: #e8dcc4;
+    --beige-dark: #d4c5a0;
+    --brown-text: #4a3f35;
+    --brown-dark: #2c2419;
+    --accent-gold: #d4af37;
+    --white: #ffffff;
+}
+
+.page-actions {
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.collection-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.info-card {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid var(--beige-medium);
+}
+
+.info-card h3 {
+    margin: 0 0 1.5rem 0;
+    color: var(--brown-dark);
+    font-size: 1.2rem;
+    border-bottom: 2px solid var(--beige-medium);
+    padding-bottom: 0.5rem;
+}
+
+.info-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.info-row.notes {
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.info-label {
+    font-weight: 600;
+    color: var(--brown-dark);
+    min-width: 200px;
+}
+
+.info-value {
+    color: var(--brown-text);
+}
+
+.deadlines-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.deadline-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: var(--beige-light);
+    border-radius: 6px;
+}
+
+.deadline-label {
+    font-weight: 500;
+    color: var(--brown-text);
+}
+
+.deadline-value {
+    font-weight: 700;
+    color: var(--brown-dark);
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.status-awaiting_modeler {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.status-awaiting_pilot {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-badge.status-awaiting_production {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.status-released {
+    background: var(--accent-gold);
+    color: var(--brown-dark);
+}
+
+.status-badge.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.status-approved {
+    background: #d4edda;
+    color: #155724;
+}
+
+.pieces-section {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid var(--beige-medium);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.section-header h3 {
+    margin: 0;
+    color: var(--brown-dark);
+    font-size: 1.3rem;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table thead {
+    background: var(--beige-medium);
+}
+
+.data-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--brown-dark);
+}
+
+.data-table tbody tr {
+    border-bottom: 1px solid var(--beige-light);
+    transition: background 0.2s;
+}
+
+.data-table tbody tr:hover {
+    background: var(--beige-light);
+}
+
+.data-table td {
+    padding: 1rem;
+    color: var(--brown-text);
+}
+
+.margin-badge {
+    display: inline-block;
+    padding: 0.3rem 0.7rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.margin-badge.good {
+    background: #d4edda;
+    color: #155724;
+}
+
+.margin-badge.medium {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.margin-badge.low {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.btn {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    background: var(--accent-gold);
+    color: var(--brown-dark);
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    background: var(--brown-dark);
+    color: var(--white);
+}
+
+.btn-primary {
+    background: var(--accent-gold);
+    color: var(--brown-dark);
+}
+
+.btn-primary:hover {
+    background: var(--brown-dark);
+    color: var(--white);
+}
+
+.btn-secondary {
+    background: var(--beige-medium);
+    color: var(--brown-dark);
+}
+
+.btn-secondary:hover {
+    background: var(--brown-dark);
+    color: var(--white);
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+    color: white;
+}
+
+.btn-small {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    background: var(--beige-medium);
+    color: var(--brown-dark);
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-right: 0.3rem;
+    transition: all 0.3s;
+}
+
+.btn-small:hover {
+    background: var(--brown-dark);
+    color: var(--white);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #999;
+}
+
+.empty-state p {
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+    .collection-info {
+        grid-template-columns: 1fr;
+    }
+
+    .deadlines-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

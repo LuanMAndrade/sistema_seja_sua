@@ -1,0 +1,498 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ piece.name }} - Sistema Seja Sua{% endblock %}
+
+{% block nav_pieces %}active{% endblock %}
+
+{% block page_title %}{{ piece.name }}{% endblock %}
+
+{% block content %}
+<div class="page-actions">
+    <a href="{% url 'store_collections:pieces_list' %}" class="btn btn-secondary">← Voltar</a>
+    <a href="{% url 'store_collections:collection_detail' piece.collection.pk %}" class="btn btn-secondary">Ver Coleção</a>
+    <a href="{% url 'store_collections:piece_edit' piece.pk %}" class="btn btn-primary">✏️ Editar</a>
+</div>
+
+<div class="piece-info">
+    <div class="info-card">
+        <h3>Informações Básicas</h3>
+
+        <div class="info-row">
+            <span class="info-label">Nome:</span>
+            <span class="info-value"><strong>{{ piece.name }}</strong></span>
+        </div>
+
+        <div class="info-row">
+            <span class="info-label">Coleção:</span>
+            <span class="info-value">{{ piece.collection.name }}</span>
+        </div>
+
+        <div class="info-row">
+            <span class="info-label">Categoria:</span>
+            <span class="info-value">{{ piece.category.name }}</span>
+        </div>
+
+        <div class="info-row">
+            <span class="info-label">Tecido:</span>
+            <span class="info-value">{{ piece.fabric }}</span>
+        </div>
+
+        <div class="info-row">
+            <span class="info-label">Status:</span>
+            <span class="status-badge status-{{ piece.status }}">
+                {{ piece.get_status_display }}
+            </span>
+        </div>
+    </div>
+
+    <div class="info-card">
+        <h3>Preços e Margem</h3>
+
+        <div class="info-row">
+            <span class="info-label">Preço de Venda:</span>
+            <span class="info-value price">R$ {{ piece.sale_price|floatformat:2 }}</span>
+        </div>
+
+        <div class="info-row">
+            <span class="info-label">Custo Total:</span>
+            <span class="info-value price">R$ {{ piece.total_cost|floatformat:2 }}</span>
+        </div>
+
+        <div class="info-row">
+            <span class="info-label">Margem de Lucro:</span>
+            <span class="margin-badge {% if piece.margin >= 30 %}good{% elif piece.margin >= 15 %}medium{% else %}low{% endif %}">
+                {{ piece.margin|floatformat:1 }}%
+            </span>
+        </div>
+    </div>
+</div>
+
+<div class="section-grid">
+    <div class="info-card">
+        <h3>Consumo de Tecido (m²)</h3>
+        <div class="size-grid">
+            <div class="size-item">
+                <span class="size-label">P:</span>
+                <span class="size-value">{{ piece.fabric_consumption_p }} m²</span>
+            </div>
+            <div class="size-item">
+                <span class="size-label">M:</span>
+                <span class="size-value">{{ piece.fabric_consumption_m }} m²</span>
+            </div>
+            <div class="size-item">
+                <span class="size-label">G:</span>
+                <span class="size-value">{{ piece.fabric_consumption_g }} m²</span>
+            </div>
+            <div class="size-item">
+                <span class="size-label">GG:</span>
+                <span class="size-value">{{ piece.fabric_consumption_gg }} m²</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-card">
+        <h3>Quantidade Inicial</h3>
+        <div class="size-grid">
+            <div class="size-item">
+                <span class="size-label">P:</span>
+                <span class="size-value">{{ piece.initial_quantity_p }} un.</span>
+            </div>
+            <div class="size-item">
+                <span class="size-label">M:</span>
+                <span class="size-value">{{ piece.initial_quantity_m }} un.</span>
+            </div>
+            <div class="size-item">
+                <span class="size-label">G:</span>
+                <span class="size-value">{{ piece.initial_quantity_g }} un.</span>
+            </div>
+            <div class="size-item">
+                <span class="size-label">GG:</span>
+                <span class="size-value">{{ piece.initial_quantity_gg }} un.</span>
+            </div>
+        </div>
+        <div class="total-quantity">
+            <strong>Total:</strong> {{ piece.total_initial_quantity }} peças
+        </div>
+    </div>
+
+    <div class="info-card">
+        <h3>Estoque Atual</h3>
+        <div class="size-grid">
+            <div class="size-item">
+                <span class="size-label">P:</span>
+                <span class="stock-badge {% if piece.current_stock_p > 0 %}has-stock{% else %}no-stock{% endif %}">
+                    {{ piece.current_stock_p }} un.
+                </span>
+            </div>
+            <div class="size-item">
+                <span class="size-label">M:</span>
+                <span class="stock-badge {% if piece.current_stock_m > 0 %}has-stock{% else %}no-stock{% endif %}">
+                    {{ piece.current_stock_m }} un.
+                </span>
+            </div>
+            <div class="size-item">
+                <span class="size-label">G:</span>
+                <span class="stock-badge {% if piece.current_stock_g > 0 %}has-stock{% else %}no-stock{% endif %}">
+                    {{ piece.current_stock_g }} un.
+                </span>
+            </div>
+            <div class="size-item">
+                <span class="size-label">GG:</span>
+                <span class="stock-badge {% if piece.current_stock_gg > 0 %}has-stock{% else %}no-stock{% endif %}">
+                    {{ piece.current_stock_gg }} un.
+                </span>
+            </div>
+        </div>
+        <div class="total-quantity">
+            <strong>Total em Estoque:</strong> {{ piece.total_current_stock }} peças
+        </div>
+        {% if piece.stock_last_synced %}
+        <div class="sync-info">
+            Última sincronização: {{ piece.stock_last_synced|date:"d/m/Y H:i" }}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if piece.accessories.all %}
+<div class="info-card">
+    <h3>Acessórios</h3>
+    <div class="accessories-list">
+        {% for accessory in piece.accessories.all %}
+            <span class="accessory-badge">{{ accessory.name }}</span>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if colors %}
+<div class="info-card">
+    <h3>Cores Disponíveis ({{ colors.count }})</h3>
+    <div class="colors-list">
+        {% for color in colors %}
+            <div class="color-item">
+                <span class="color-swatch" style="background-color: {{ color.color_hex }};"></span>
+                <span class="color-name">{{ color.color_name }}</span>
+                {% if color.color_hex %}
+                    <span class="color-hex">{{ color.color_hex }}</span>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if images %}
+<div class="info-card">
+    <h3>Imagens ({{ images.count }})</h3>
+    <div class="images-grid">
+        {% for image in images %}
+            <div class="image-item">
+                <img src="{{ image.image.url }}" alt="{{ image.caption }}">
+                {% if image.caption %}
+                    <p class="image-caption">{{ image.caption }}</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<style>
+:root {
+    --beige-light: #f5f1e8;
+    --beige-medium: #e8dcc4;
+    --beige-dark: #d4c5a0;
+    --brown-text: #4a3f35;
+    --brown-dark: #2c2419;
+    --accent-gold: #d4af37;
+    --white: #ffffff;
+}
+
+.page-actions {
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.piece-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.section-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.info-card {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid var(--beige-medium);
+}
+
+.info-card h3 {
+    margin: 0 0 1.5rem 0;
+    color: var(--brown-dark);
+    font-size: 1.2rem;
+    border-bottom: 2px solid var(--beige-medium);
+    padding-bottom: 0.5rem;
+}
+
+.info-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    align-items: center;
+}
+
+.info-label {
+    font-weight: 600;
+    color: var(--brown-dark);
+    min-width: 150px;
+}
+
+.info-value {
+    color: var(--brown-text);
+}
+
+.info-value.price {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--brown-dark);
+}
+
+.size-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.size-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--beige-light);
+    border-radius: 6px;
+}
+
+.size-label {
+    font-weight: 700;
+    color: var(--brown-dark);
+    font-size: 1.1rem;
+}
+
+.size-value {
+    font-weight: 500;
+    color: var(--brown-text);
+}
+
+.total-quantity {
+    padding: 1rem;
+    background: var(--accent-gold);
+    border-radius: 6px;
+    text-align: center;
+    color: var(--brown-dark);
+    font-size: 1.1rem;
+    margin-top: 1rem;
+}
+
+.sync-info {
+    text-align: center;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #999;
+}
+
+.stock-badge {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.stock-badge.has-stock {
+    background: #d4edda;
+    color: #155724;
+}
+
+.stock-badge.no-stock {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.status-approved {
+    background: #d4edda;
+    color: #155724;
+}
+
+.margin-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.margin-badge.good {
+    background: #d4edda;
+    color: #155724;
+}
+
+.margin-badge.medium {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.margin-badge.low {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.accessories-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.accessory-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: var(--beige-medium);
+    border-radius: 20px;
+    color: var(--brown-dark);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.colors-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.color-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: var(--beige-light);
+    border-radius: 6px;
+}
+
+.color-swatch {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--beige-dark);
+}
+
+.color-name {
+    font-weight: 600;
+    color: var(--brown-dark);
+    flex: 1;
+}
+
+.color-hex {
+    font-family: monospace;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.images-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.image-item {
+    text-align: center;
+}
+
+.image-item img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid var(--beige-medium);
+}
+
+.image-caption {
+    margin-top: 0.5rem;
+    color: var(--brown-text);
+    font-size: 0.9rem;
+}
+
+.btn {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    background: var(--accent-gold);
+    color: var(--brown-dark);
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    background: var(--brown-dark);
+    color: var(--white);
+}
+
+.btn-primary {
+    background: var(--accent-gold);
+    color: var(--brown-dark);
+}
+
+.btn-primary:hover {
+    background: var(--brown-dark);
+    color: var(--white);
+}
+
+.btn-secondary {
+    background: var(--beige-medium);
+    color: var(--brown-dark);
+}
+
+.btn-secondary:hover {
+    background: var(--brown-dark);
+    color: var(--white);
+}
+
+@media (max-width: 1024px) {
+    .section-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .piece-info {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Fabric, Accessory, Collection, Piece, PieceColor, PieceImage
+from .models import Fabric, Collection, Piece, PieceColor, PieceImage
 
 
 @admin.register(Fabric)
@@ -7,12 +7,6 @@ class FabricAdmin(admin.ModelAdmin):
     list_display = ['name', 'color', 'supplier', 'roll_weight_kg', 'yield_area_per_kg']
     search_fields = ['name', 'color']
     list_filter = ['supplier', 'created_at']
-
-
-@admin.register(Accessory)
-class AccessoryAdmin(admin.ModelAdmin):
-    list_display = ['name', 'created_at']
-    search_fields = ['name']
 
 
 class PieceColorInline(admin.TabularInline):
@@ -29,7 +23,7 @@ class PieceInline(admin.StackedInline):
     model = Piece
     extra = 0
     fields = [
-        'category', 'fabric', 'status', 'sale_price', 'total_cost',
+        'name', 'category', 'fabric', 'status', 'sale_price', 'total_cost',
         ('fabric_consumption_p', 'fabric_consumption_m', 'fabric_consumption_g', 'fabric_consumption_gg'),
         ('initial_quantity_p', 'initial_quantity_m', 'initial_quantity_g', 'initial_quantity_gg'),
         'accessories'
@@ -65,15 +59,17 @@ class CollectionAdmin(admin.ModelAdmin):
 
 @admin.register(Piece)
 class PieceAdmin(admin.ModelAdmin):
-    list_display = ['collection', 'category', 'fabric', 'status', 'sale_price', 'total_cost', 'margin']
-    search_fields = ['collection__name', 'category__name']
+    list_display = ['name', 'collection', 'category', 'fabric', 'status', 'sale_price', 'total_cost', 'margin',
+                    'is_synced_with_tiny', 'total_current_stock', 'stock_last_synced']
+    search_fields = ['name', 'collection__name', 'category__name']
     list_filter = ['status', 'collection', 'category', 'created_at']
     inlines = [PieceColorInline, PieceImageInline]
     filter_horizontal = ['accessories']
+    actions = ['sync_stock_from_tiny']
 
     fieldsets = (
         ('Basic Information', {
-            'fields': ('collection', 'category', 'fabric', 'status')
+            'fields': ('name', 'collection', 'category', 'fabric', 'status')
         }),
         ('Pricing', {
             'fields': ('sale_price', 'total_cost')
@@ -90,14 +86,67 @@ class PieceAdmin(admin.ModelAdmin):
                 ('initial_quantity_g', 'initial_quantity_gg'),
             )
         }),
+        ('Tiny ERP Integration', {
+            'fields': ('tiny_erp_piece',),
+            'description': 'Vincule esta peça com uma peça do Tiny ERP para sincronizar o estoque automaticamente.'
+        }),
+        ('Current Stock (Synced from Tiny ERP)', {
+            'fields': (
+                ('current_stock_p', 'current_stock_m'),
+                ('current_stock_g', 'current_stock_gg'),
+                'stock_last_synced',
+            ),
+            'classes': ('collapse',),
+            'description': 'Estoque atual sincronizado do Tiny ERP. Use a ação "Sincronizar estoque do Tiny ERP" para atualizar.'
+        }),
         ('Accessories', {
             'fields': ('accessories',)
         }),
     )
 
+    readonly_fields = ['current_stock_p', 'current_stock_m', 'current_stock_g',
+                       'current_stock_gg', 'stock_last_synced']
+
     def margin(self, obj):
         return f"{obj.margin:.2f}%"
     margin.short_description = 'Margin'
+
+    def is_synced_with_tiny(self, obj):
+        return obj.is_synced_with_tiny
+    is_synced_with_tiny.boolean = True
+    is_synced_with_tiny.short_description = 'Synced with Tiny'
+
+    def sync_stock_from_tiny(self, request, queryset):
+        """Admin action to sync stock from Tiny ERP for selected pieces"""
+        from .tiny_erp_sync import TinyERPStockSync
+
+        sync_service = TinyERPStockSync()
+        success_count = 0
+        error_count = 0
+
+        for piece in queryset:
+            if piece.tiny_erp_piece:
+                if sync_service.sync_piece_stock(piece):
+                    success_count += 1
+                else:
+                    error_count += 1
+            else:
+                error_count += 1
+
+        if success_count > 0:
+            self.message_user(
+                request,
+                f'Successfully synced stock for {success_count} piece(s).',
+                level='success'
+            )
+        if error_count > 0:
+            self.message_user(
+                request,
+                f'Failed to sync {error_count} piece(s). Make sure they are linked to Tiny ERP pieces.',
+                level='warning'
+            )
+
+    sync_stock_from_tiny.short_description = 'Sincronizar estoque do Tiny ERP'
 
 
 @admin.register(PieceColor)

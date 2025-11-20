@@ -52,9 +52,15 @@
                         <span class="section-title">Estoque</span>
                     </li>
                     <li>
+                        <a href="{% url 'inventory:collection_stock' %}" class="{% block nav_collection_stock %}{% endblock %}">
+                            <span class="icon">📊</span>
+                            <span>Estoque de Coleções</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{% url 'inventory:inventory_list' %}" class="{% block nav_inventory %}{% endblock %}">
                             <span class="icon">📦</span>
-                            <span>Peças em Estoque</span>
+                            <span>Peças Tiny ERP</span>
                         </a>
                     </li>
                     <li>

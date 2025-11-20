@@ -54,6 +54,7 @@
                 <td>
                     <a href="{% url 'store_collections:collection_detail' collection.pk %}" class="btn-small">Ver Detalhes</a>
                     <a href="{% url 'store_collections:collection_edit' collection.pk %}" class="btn-small btn-secondary">Editar</a>
+                    <a href="{% url 'store_collections:collection_delete' collection.pk %}" class="btn-small btn-danger">Excluir</a>
                 </td>
             </tr>
             {% endfor %}
@@ -185,6 +186,15 @@
 
 .btn-small.btn-secondary {
     background: var(--beige-medium);
+}
+
+.btn-small.btn-danger {
+    background: #dc3545;
+    color: var(--white);
+}
+
+.btn-small.btn-danger:hover {
+    background: #c82333;
 }
 
 .empty-state {

@@ -24,6 +24,14 @@
         <div class="form-section">
             <h3>Informações Básicas</h3>
 
+            <div class="form-group">
+                <label for="{{ form.name.id_for_label }}">{{ form.name.label }} *</label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                <span class="error">{{ form.name.errors.0 }}</span>
+                {% endif %}
+            </div>
+
             <div class="form-row">
                 <div class="form-group">
                     <label for="{{ form.collection.id_for_label }}">{{ form.collection.label }} *</label>
@@ -163,16 +171,149 @@
 
         <div class="form-section">
             <h3>Acessórios</h3>
-            <p class="section-description">Selecione os acessórios utilizados nesta peça</p>
+            <p class="section-description">Busque e selecione os acessórios utilizados nesta peça</p>
 
+            <!-- Campo de busca -->
             <div class="form-group">
-                <div class="accessories-group">
-                    {{ form.accessories }}
-                    {% if form.accessories.errors %}
-                    <span class="error">{{ form.accessories.errors.0 }}</span>
+                <label for="accessory_search_input">Buscar Acessório</label>
+                <div class="search-box">
+                    <input type="text"
+                           id="accessory_search_input"
+                           class="form-input"
+                           placeholder="Digite o nome do acessório..."
+                           minlength="1">
+                    <button type="button" id="search_accessory_btn" class="btn btn-search">
+                        🔍 Buscar
+                    </button>
+                </div>
+                <small class="help-text">Digite o nome do acessório e clique em buscar</small>
+            </div>
+
+            <!-- Loading spinner -->
+            <div id="accessory_search_loading" class="loading-spinner" style="display: none;">
+                <div class="spinner"></div>
+                <span>Buscando acessórios...</span>
+            </div>
+
+            <!-- Results container -->
+            <div id="accessory_search_results" style="display: none;">
+                <div class="form-group">
+                    <label>Resultados da Busca</label>
+                    <div id="accessory_results_list" class="results-list">
+                        <!-- Results will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selected accessories display -->
+            <div class="form-group">
+                <label>Acessórios Selecionados</label>
+                <div id="selected_accessories_container" class="selected-items-container">
+                    {% if piece and piece.accessories.all %}
+                        {% for accessory in piece.accessories.all %}
+                        <div class="selected-item" data-id="{{ accessory.id }}">
+                            <span class="item-name">{{ accessory.name }}</span>
+                            <button type="button" class="remove-item" onclick="removeAccessory({{ accessory.id }})">×</button>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <p class="empty-message">Nenhum acessório selecionado ainda</p>
                     {% endif %}
                 </div>
             </div>
+
+            <!-- Hidden field for form submission (stores selected accessory IDs) -->
+            <div style="display: none;">
+                {{ form.accessories }}
+            </div>
+
+            {% if form.accessories.errors %}
+            <span class="error">{{ form.accessories.errors.0 }}</span>
+            {% endif %}
+        </div>
+
+        <div class="form-section tiny-erp-section">
+            <h3>🔗 Integração com Tiny ERP</h3>
+            <p class="section-description">
+                Busque e vincule um produto do Tiny ERP para sincronizar automaticamente o estoque.
+            </p>
+
+            <!-- Campo de busca -->
+            <div class="form-group">
+                <label for="tiny_search_input">Buscar Produto no Tiny ERP</label>
+                <div class="search-box">
+                    <input type="text"
+                           id="tiny_search_input"
+                           class="form-input"
+                           placeholder="Digite o nome do produto..."
+                           minlength="2">
+                    <button type="button" id="search_tiny_btn" class="btn btn-search">
+                        🔍 Buscar
+                    </button>
+                </div>
+                <small class="help-text">Digite pelo menos 2 caracteres e clique em buscar</small>
+            </div>
+
+            <!-- Loading spinner -->
+            <div id="search_loading" class="loading-spinner" style="display: none;">
+                <div class="spinner"></div>
+                <span>Buscando produtos no Tiny ERP...</span>
+            </div>
+
+            <!-- Results container -->
+            <div id="search_results" style="display: none;">
+                <div class="form-group">
+                    <label for="product_selector">Selecione o Produto</label>
+                    <select id="product_selector" class="form-select" size="5">
+                        <!-- Products will be loaded here -->
+                    </select>
+                    <button type="button" id="link_product_btn" class="btn btn-link" disabled>
+                        ✓ Vincular Produto Selecionado
+                    </button>
+                </div>
+            </div>
+
+            <!-- Hidden field for the actual form submission -->
+            <div style="display: none;">
+                {{ form.tiny_erp_piece }}
+            </div>
+
+            <!-- Messages -->
+            <div id="tiny_messages"></div>
+
+            {% if piece and piece.is_synced_with_tiny %}
+            <div class="sync-info">
+                <p><strong>✓ Esta peça está vinculada ao Tiny ERP</strong></p>
+                <p>Produto vinculado: <strong>{{ piece.tiny_erp_piece.name }}</strong></p>
+                {% if piece.stock_last_synced %}
+                <p>Última sincronização: {{ piece.stock_last_synced|date:"d/m/Y H:i" }}</p>
+                <div class="stock-display">
+                    <div class="stock-item">
+                        <span class="size-label">P:</span>
+                        <span class="stock-value">{{ piece.current_stock_p }}</span>
+                    </div>
+                    <div class="stock-item">
+                        <span class="size-label">M:</span>
+                        <span class="stock-value">{{ piece.current_stock_m }}</span>
+                    </div>
+                    <div class="stock-item">
+                        <span class="size-label">G:</span>
+                        <span class="stock-value">{{ piece.current_stock_g }}</span>
+                    </div>
+                    <div class="stock-item">
+                        <span class="size-label">GG:</span>
+                        <span class="stock-value">{{ piece.current_stock_gg }}</span>
+                    </div>
+                    <div class="stock-item total">
+                        <span class="size-label">Total:</span>
+                        <span class="stock-value">{{ piece.total_current_stock }}</span>
+                    </div>
+                </div>
+                {% else %}
+                <p class="warning-text">⚠️ Estoque ainda não sincronizado</p>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
 
         <div class="form-actions">
@@ -248,39 +389,194 @@
 
 .form-input:focus,
 .form-select:focus,
-.form-textarea:focus {
+.form-textarea:focus,
+.form-select-multiple:focus {
     outline: none;
     border-color: var(--accent-gold);
     box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.1);
 }
 
-.accessories-group {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 0.75rem;
-    padding: 1rem;
-    background: var(--beige-light);
-    border-radius: 4px;
+.form-select-multiple {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--beige-dark);
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: inherit;
+    background: var(--white);
+    color: var(--brown-text);
+    min-height: 200px;
 }
 
-.accessories-group label {
+.form-select-multiple option {
+    padding: 0.5rem;
+    border-radius: 4px;
+    margin: 2px 0;
+}
+
+.form-select-multiple option:checked {
+    background: var(--accent-gold) !important;
+    color: var(--brown-dark) !important;
+    font-weight: 600;
+}
+
+.help-text {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #666;
+    font-style: italic;
+}
+
+.search-box {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.search-box .form-input {
+    flex: 1;
+}
+
+.btn-search {
+    background: #28a745;
+    color: white;
+    white-space: nowrap;
+}
+
+.btn-search:hover {
+    background: #218838;
+    color: white;
+}
+
+.loading-spinner {
     display: flex;
     align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--beige-light);
+    border-radius: 6px;
+    margin-top: 1rem;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid var(--beige-dark);
+    border-top-color: var(--accent-gold);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.results-list {
+    display: flex;
+    flex-direction: column;
     gap: 0.5rem;
-    padding: 0.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 1rem;
+    background: var(--beige-light);
+    border-radius: 6px;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
     background: var(--white);
+    border: 1px solid var(--beige-medium);
     border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.result-item:hover {
+    border-color: var(--accent-gold);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.result-item-name {
+    font-weight: 500;
+    color: var(--brown-dark);
+}
+
+.btn-add {
+    padding: 0.4rem 0.8rem;
+    background: var(--accent-gold);
+    color: var(--brown-dark);
+    border: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
 }
 
-.accessories-group label:hover {
-    background: var(--beige-medium);
+.btn-add:hover {
+    background: var(--brown-dark);
+    color: var(--white);
 }
 
-.accessories-group input[type="checkbox"] {
-    width: auto;
+.btn-add:disabled {
+    background: var(--beige-medium);
+    color: #999;
+    cursor: not-allowed;
+}
+
+.selected-items-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--beige-light);
+    border-radius: 6px;
+    min-height: 60px;
+}
+
+.selected-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--accent-gold);
+    color: var(--brown-dark);
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.item-name {
+    line-height: 1;
+}
+
+.remove-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: var(--brown-dark);
+    color: var(--white);
+    border: none;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    line-height: 1;
     cursor: pointer;
+    transition: all 0.2s;
+}
+
+.remove-item:hover {
+    background: #dc3545;
+    transform: scale(1.1);
+}
+
+.empty-message {
+    color: #999;
+    font-style: italic;
+    margin: 0;
 }
 
 .error {
@@ -329,5 +625,545 @@
 .btn-secondary:hover {
     background: var(--beige-dark);
 }
+
+/* Tiny ERP Section */
+.tiny-erp-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 2rem;
+    border-radius: 8px;
+    border: 2px solid var(--accent-gold);
+}
+
+.tiny-erp-section h3 {
+    color: var(--accent-gold);
+    margin-bottom: 0.5rem;
+}
+
+.tiny-erp-section code {
+    background: var(--brown-dark);
+    color: var(--white);
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+}
+
+.help-text {
+    display: block;
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    font-style: italic;
+}
+
+.sync-info {
+    background: var(--white);
+    border: 1px solid var(--beige-dark);
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.sync-info p {
+    margin: 0.5rem 0;
+    color: var(--brown-text);
+}
+
+.sync-info strong {
+    color: var(--brown-dark);
+}
+
+.warning-text {
+    color: #856404;
+    background: #fff3cd;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    border-left: 4px solid #ffc107;
+}
+
+.stock-display {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--beige-light);
+    border-radius: 4px;
+}
+
+.stock-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.75rem;
+    background: var(--white);
+    border-radius: 4px;
+    min-width: 70px;
+}
+
+.stock-item.total {
+    background: var(--accent-gold);
+    font-weight: bold;
+}
+
+.stock-item.total .size-label,
+.stock-item.total .stock-value {
+    color: var(--brown-dark);
+}
+
+.size-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--brown-text);
+}
+
+.stock-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--brown-dark);
+}
+
+/* Search Box */
+.search-box {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.search-box input {
+    flex: 1;
+}
+
+.btn-search {
+    white-space: nowrap;
+    min-width: 120px;
+}
+
+.btn-link {
+    margin-top: 0.5rem;
+    background: #28a745;
+    color: white;
+}
+
+.btn-link:hover {
+    background: #218838;
+}
+
+.btn-link:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: var(--beige-light);
+    border-radius: 6px;
+    margin: 1rem 0;
+}
+
+.spinner {
+    border: 3px solid var(--beige-dark);
+    border-top: 3px solid var(--accent-gold);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Product Selector */
+#product_selector {
+    width: 100%;
+    min-height: 150px;
+    margin-bottom: 0.5rem;
+}
+
+#product_selector option {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--beige-light);
+    cursor: pointer;
+}
+
+#product_selector option:hover {
+    background: var(--beige-light);
+}
+
+/* Messages */
+#tiny_messages .message {
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 6px;
+    border-left: 4px solid;
+}
+
+#tiny_messages .message.success {
+    background: #d4edda;
+    color: #155724;
+    border-color: #28a745;
+}
+
+#tiny_messages .message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border-color: #dc3545;
+}
+
+#tiny_messages .message.info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border-color: #17a2b8;
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('tiny_search_input');
+    const searchBtn = document.getElementById('search_tiny_btn');
+    const loadingDiv = document.getElementById('search_loading');
+    const resultsDiv = document.getElementById('search_results');
+    const productSelector = document.getElementById('product_selector');
+    const linkBtn = document.getElementById('link_product_btn');
+    const messagesDiv = document.getElementById('tiny_messages');
+    const hiddenSelect = document.getElementById('{{ form.tiny_erp_piece.id_for_label }}');
+
+    let searchResults = [];
+
+    // Search on button click
+    searchBtn.addEventListener('click', function() {
+        performSearch();
+    });
+
+    // Search on Enter key
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            performSearch();
+        }
+    });
+
+    // Enable/disable link button based on selection
+    productSelector.addEventListener('change', function() {
+        linkBtn.disabled = !productSelector.value;
+    });
+
+    // Link product
+    linkBtn.addEventListener('click', function() {
+        linkSelectedProduct();
+    });
+
+    function performSearch() {
+        const searchTerm = searchInput.value.trim();
+
+        if (searchTerm.length < 2) {
+            showMessage('Digite pelo menos 2 caracteres para buscar', 'error');
+            return;
+        }
+
+        // Clear previous results
+        clearMessages();
+        resultsDiv.style.display = 'none';
+        productSelector.innerHTML = '';
+        searchResults = [];
+
+        // Show loading
+        loadingDiv.style.display = 'flex';
+        searchBtn.disabled = true;
+
+        // Make AJAX request
+        fetch(`{% url 'store_collections:search_tiny_products' %}?q=${encodeURIComponent(searchTerm)}`)
+            .then(response => response.json())
+            .then(data => {
+                loadingDiv.style.display = 'none';
+                searchBtn.disabled = false;
+
+                if (data.success) {
+                    searchResults = data.products;
+                    displayResults(data.products);
+                } else {
+                    showMessage(data.error || 'Erro ao buscar produtos', 'error');
+                }
+            })
+            .catch(error => {
+                loadingDiv.style.display = 'none';
+                searchBtn.disabled = false;
+                showMessage('Erro na requisição: ' + error.message, 'error');
+            });
+    }
+
+    function displayResults(products) {
+        if (products.length === 0) {
+            showMessage('Nenhum produto encontrado', 'info');
+            return;
+        }
+
+        resultsDiv.style.display = 'block';
+        productSelector.innerHTML = '';
+
+        products.forEach((product, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = `${product.name} - SKU: ${product.sku} - Estoque: ${product.quantity}`;
+            productSelector.appendChild(option);
+        });
+
+        showMessage(`${products.length} produto(s) encontrado(s)`, 'success');
+    }
+
+    function linkSelectedProduct() {
+        const selectedIndex = productSelector.value;
+
+        if (selectedIndex === '') {
+            showMessage('Selecione um produto', 'error');
+            return;
+        }
+
+        const selectedProduct = searchResults[selectedIndex];
+
+        if (!selectedProduct) {
+            showMessage('Produto inválido', 'error');
+            return;
+        }
+
+        linkBtn.disabled = true;
+        linkBtn.textContent = '⏳ Vinculando...';
+
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        // Make AJAX request to link product
+        fetch(`{% url 'store_collections:link_tiny_product' %}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                product: selectedProduct
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            linkBtn.disabled = false;
+            linkBtn.textContent = '✓ Vincular Produto Selecionado';
+
+            if (data.success) {
+                // Update hidden select with the inventory piece ID
+                hiddenSelect.value = data.inventory_piece_id;
+
+                showMessage(
+                    `✓ Produto "${data.inventory_piece_name}" vinculado com sucesso! Salve o formulário para confirmar.`,
+                    'success'
+                );
+
+                // Hide search results
+                resultsDiv.style.display = 'none';
+                searchInput.value = '';
+            } else {
+                showMessage(data.error || 'Erro ao vincular produto', 'error');
+            }
+        })
+        .catch(error => {
+            linkBtn.disabled = false;
+            linkBtn.textContent = '✓ Vincular Produto Selecionado';
+            showMessage('Erro na requisição: ' + error.message, 'error');
+        });
+    }
+
+    function showMessage(text, type) {
+        clearMessages();
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
+        messageDiv.textContent = text;
+        messagesDiv.appendChild(messageDiv);
+    }
+
+    function clearMessages() {
+        messagesDiv.innerHTML = '';
+    }
+
+    // ========== ACCESSORIES SEARCH ==========
+    const accessorySearchInput = document.getElementById('accessory_search_input');
+    const accessorySearchBtn = document.getElementById('search_accessory_btn');
+    const accessoryLoadingDiv = document.getElementById('accessory_search_loading');
+    const accessoryResultsDiv = document.getElementById('accessory_search_results');
+    const accessoryResultsList = document.getElementById('accessory_results_list');
+    const selectedAccessoriesContainer = document.getElementById('selected_accessories_container');
+    const accessoriesHiddenSelect = document.getElementById('{{ form.accessories.id_for_label }}');
+
+    // Track selected accessories
+    let selectedAccessories = new Set();
+
+    // Initialize with pre-selected accessories (for edit mode)
+    document.querySelectorAll('.selected-item').forEach(item => {
+        const id = parseInt(item.getAttribute('data-id'));
+        if (id) {
+            selectedAccessories.add(id);
+        }
+    });
+
+    // Update hidden select with current selections
+    function updateHiddenSelect() {
+        // Clear all options
+        Array.from(accessoriesHiddenSelect.options).forEach(option => {
+            option.selected = false;
+        });
+
+        // Select the chosen accessories
+        selectedAccessories.forEach(id => {
+            Array.from(accessoriesHiddenSelect.options).forEach(option => {
+                if (parseInt(option.value) === id) {
+                    option.selected = true;
+                }
+            });
+        });
+    }
+
+    // Search accessories on button click
+    accessorySearchBtn.addEventListener('click', function() {
+        performAccessorySearch();
+    });
+
+    // Search on Enter key
+    accessorySearchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            performAccessorySearch();
+        }
+    });
+
+    function performAccessorySearch() {
+        const searchTerm = accessorySearchInput.value.trim();
+
+        if (searchTerm.length < 1) {
+            alert('Digite pelo menos 1 caractere para buscar');
+            return;
+        }
+
+        // Show loading
+        accessoryLoadingDiv.style.display = 'flex';
+        accessoryResultsDiv.style.display = 'none';
+        accessoryResultsList.innerHTML = '';
+
+        // Make AJAX request
+        fetch(`{% url 'store_collections:search_accessories' %}?q=${encodeURIComponent(searchTerm)}`)
+            .then(response => response.json())
+            .then(data => {
+                accessoryLoadingDiv.style.display = 'none';
+
+                if (data.success) {
+                    if (data.accessories.length === 0) {
+                        accessoryResultsList.innerHTML = '<p class="empty-message">Nenhum acessório encontrado com esse nome.</p>';
+                    } else {
+                        // Display results
+                        data.accessories.forEach(accessory => {
+                            const resultItem = document.createElement('div');
+                            resultItem.className = 'result-item';
+
+                            const isSelected = selectedAccessories.has(accessory.id);
+
+                            resultItem.innerHTML = `
+                                <span class="result-item-name">${accessory.name}</span>
+                                <button type="button"
+                                        class="btn-add"
+                                        onclick="addAccessory(${accessory.id}, '${accessory.name.replace(/'/g, "\\'")}')"
+                                        ${isSelected ? 'disabled' : ''}>
+                                    ${isSelected ? '✓ Adicionado' : '+ Adicionar'}
+                                </button>
+                            `;
+
+                            accessoryResultsList.appendChild(resultItem);
+                        });
+                    }
+                    accessoryResultsDiv.style.display = 'block';
+                } else {
+                    alert('Erro ao buscar acessórios: ' + (data.error || 'Erro desconhecido'));
+                }
+            })
+            .catch(error => {
+                accessoryLoadingDiv.style.display = 'none';
+                console.error('Erro:', error);
+                alert('Erro ao buscar acessórios. Verifique a conexão.');
+            });
+    }
+
+    // Add accessory to selection
+    window.addAccessory = function(id, name) {
+        if (selectedAccessories.has(id)) {
+            return; // Already selected
+        }
+
+        // Add to set
+        selectedAccessories.add(id);
+
+        // Remove empty message if exists
+        const emptyMessage = selectedAccessoriesContainer.querySelector('.empty-message');
+        if (emptyMessage) {
+            emptyMessage.remove();
+        }
+
+        // Create selected item element
+        const selectedItem = document.createElement('div');
+        selectedItem.className = 'selected-item';
+        selectedItem.setAttribute('data-id', id);
+        selectedItem.innerHTML = `
+            <span class="item-name">${name}</span>
+            <button type="button" class="remove-item" onclick="removeAccessory(${id})">×</button>
+        `;
+
+        selectedAccessoriesContainer.appendChild(selectedItem);
+
+        // Update hidden select
+        updateHiddenSelect();
+
+        // Update button in results
+        const buttons = accessoryResultsList.querySelectorAll('.btn-add');
+        buttons.forEach(btn => {
+            if (btn.onclick.toString().includes(`addAccessory(${id},`)) {
+                btn.disabled = true;
+                btn.textContent = '✓ Adicionado';
+            }
+        });
+    };
+
+    // Remove accessory from selection
+    window.removeAccessory = function(id) {
+        // Remove from set
+        selectedAccessories.delete(id);
+
+        // Remove element
+        const item = selectedAccessoriesContainer.querySelector(`[data-id="${id}"]`);
+        if (item) {
+            item.remove();
+        }
+
+        // Add empty message if no items left
+        if (selectedAccessories.size === 0) {
+            selectedAccessoriesContainer.innerHTML = '<p class="empty-message">Nenhum acessório selecionado ainda</p>';
+        }
+
+        // Update hidden select
+        updateHiddenSelect();
+
+        // Update button in results
+        const buttons = accessoryResultsList.querySelectorAll('.btn-add');
+        buttons.forEach(btn => {
+            if (btn.onclick.toString().includes(`addAccessory(${id},`)) {
+                btn.disabled = false;
+                btn.textContent = '+ Adicionar';
+            }
+        });
+    };
+
+    // Initialize hidden select on page load
+    updateHiddenSelect();
+});
+</script>
 {% endblock %}
