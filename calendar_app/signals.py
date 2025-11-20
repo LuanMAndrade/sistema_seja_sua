@@ -13,6 +13,13 @@ def calendar_event_saved(sender, instance, created, **kwargs):
     Triggered when a CalendarEvent is saved.
     Syncs the event to Google Calendar if sync is enabled.
     """
+    # Prevent infinite recursion: skip if update_fields contains only sync-related fields
+    update_fields = kwargs.get('update_fields')
+    if update_fields is not None:
+        # If only google_event_id or last_synced are being updated, skip signal
+        if update_fields <= {'google_event_id', 'last_synced'}:
+            return
+
     if not instance.sync_enabled:
         return
 
