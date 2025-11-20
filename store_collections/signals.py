@@ -125,9 +125,24 @@ def piece_saved(sender, instance, created, **kwargs):
     """
     Triggered when a Piece is saved.
     Update collection statistics and finance predictions.
+    Sync stock from Tiny ERP if piece is linked.
     """
     # Import here to avoid circular imports
     from sales_stats.models import PieceSalesStatistics, CollectionSalesStatistics
+    from .tiny_erp_sync import TinyERPStockSync
+
+    # Get the fields that were updated
+    update_fields = kwargs.get('update_fields')
+
+    # Sync stock from Tiny ERP if piece is linked
+    # Only sync if this is not already a stock sync update (to avoid loops)
+    stock_sync_fields = {'current_stock_p', 'current_stock_m', 'current_stock_g', 'current_stock_gg', 'stock_last_synced'}
+    is_stock_sync_update = update_fields is not None and set(update_fields) == stock_sync_fields
+
+    if instance.tiny_erp_piece and not is_stock_sync_update:
+        # Sync immediately after linking or when piece is updated
+        sync_service = TinyERPStockSync()
+        sync_service.sync_piece_stock(instance)
 
     # Create or update piece statistics if it doesn't exist
     if created:

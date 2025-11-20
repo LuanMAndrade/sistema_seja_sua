@@ -145,9 +145,66 @@ class TinyERPSearch:
             logger.error(f"Error parsing Tiny ERP product details response: {e}")
             return None
 
+    def get_variation_stock(self, variation_id):
+        """
+        Get stock for a specific product variation using produto.obter.estoque.php
+
+        Args:
+            variation_id (str): Variation ID in Tiny ERP
+
+        Returns:
+            float: Stock quantity for the variation
+        """
+        if not self.api_token:
+            logger.error("Cannot get variation stock: API token not configured")
+            return 0
+
+        try:
+            endpoint = f"{self.api_url}/produto.obter.estoque.php"
+
+            params = {
+                'token': self.api_token,
+                'formato': 'json',
+                'id': variation_id
+            }
+
+            logger.info(f"Fetching stock for variation ID: {variation_id}")
+
+            response = requests.get(endpoint, params=params, timeout=10)
+            response.raise_for_status()
+
+            data = response.json()
+
+            if isinstance(data, dict):
+                retorno = data.get('retorno', {})
+
+                # Check for API errors
+                if 'codigo_erro' in retorno:
+                    error_code = retorno.get('codigo_erro')
+                    error_message = retorno.get('erro', 'Unknown error')
+                    logger.error(f"Tiny ERP API error {error_code}: {error_message}")
+                    return 0
+
+                # Get stock information
+                produto = retorno.get('produto', {})
+                estoque = int(produto.get('saldo', 0))
+
+                logger.info(f"Variation {variation_id} stock: {estoque}")
+                return estoque
+
+            return 0
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error fetching variation stock from Tiny ERP: {e}")
+            return 0
+        except (ValueError, KeyError) as e:
+            logger.error(f"Error parsing Tiny ERP variation stock response: {e}")
+            return 0
+
     def map_size_variations(self, variations):
         """
         Map Tiny ERP variations to P, M, G, GG sizes
+        Fetches accurate stock for each variation using produto.obter.estoque.php
 
         Args:
             variations (list): List of variations from Tiny ERP
@@ -160,31 +217,26 @@ class TinyERPSearch:
         if not variations:
             return size_stock
 
-        # Common size variations in Tiny ERP (case insensitive)
-        size_mappings = {
-            'P': ['P', 'PP', 'PEQUENO', 'SMALL', 'S'],
-            'M': ['M', 'MEDIO', 'MÉDIO', 'MEDIUM'],
-            'G': ['G', 'GRANDE', 'LARGE', 'L'],
-            'GG': ['GG', 'XG', 'XL', 'EXTRA GRANDE', 'EXTRA LARGE', 'XXL']
-        }
-
         for variation in variations:
+            variation = variation.get('variacao', {})
             grade = variation.get('grade', {})
 
             # Try to get variation name/size
-            variation_name = grade.get('nome', '').upper().strip()
+            variation_name = grade.get('Tamanho', '').upper().strip()
 
-            # Get stock for this variation
-            estoque = float(variation.get('saldo', 0))
+            # Get variation ID for accurate stock lookup
+            variation_id = variation.get('id')
 
-            # Map to our sizes
-            for our_size, tiny_sizes in size_mappings.items():
-                for tiny_size in tiny_sizes:
-                    if tiny_size in variation_name:
-                        size_stock[our_size] += estoque
-                        break
+            if not variation_id:
+                logger.warning(f"Variation '{variation_name}' has no ID, skipping")
+                continue
 
-        logger.info(f"Mapped variation stock: {size_stock}")
+            # Fetch accurate stock for this variation using the dedicated endpoint
+            estoque = self.get_variation_stock(variation_id)
+
+            size_stock[variation_name] = estoque
+
+        logger.info(f"Final mapped variation stock: {size_stock}")
         return size_stock
 
     def get_or_create_inventory_piece(self, product_data):

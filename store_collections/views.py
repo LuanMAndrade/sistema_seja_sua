@@ -403,3 +403,113 @@ def link_tiny_product(request):
             'success': False,
             'error': f'Erro ao vincular produto: {str(e)}'
         }, status=500)
+
+
+@login_required
+def tiny_debug(request):
+    """
+    Página de debug para visualizar JSONs retornados pela API Tiny ERP
+    """
+    import json as json_lib
+    import requests
+
+    search_term = request.GET.get('search', '').strip()
+    product_id = request.GET.get('product_id', '').strip()
+
+    context = {
+        'search_term': search_term,
+        'product_id': product_id,
+        'search_results': None,
+        'product_details': None,
+        'variations_stock': None,
+        'products_list': None,
+    }
+
+    if search_term:
+        # Realizar busca
+        tiny_search = TinyERPSearch()
+
+        # JSON da busca de produtos
+        endpoint = f"{tiny_search.api_url}/produtos.pesquisa.php"
+        params = {
+            'token': tiny_search.api_token,
+            'formato': 'json',
+            'pesquisa': search_term
+        }
+
+        try:
+            response = requests.get(endpoint, params=params, timeout=10)
+            response_json = response.json()
+            context['search_results'] = json_lib.dumps(response_json, indent=2, ensure_ascii=False)
+
+            # Extrair lista de produtos para links clicáveis
+            produtos = response_json.get('retorno', {}).get('produtos', [])
+            if produtos:
+                context['products_list'] = [
+                    {
+                        'id': item.get('produto', {}).get('id'),
+                        'nome': item.get('produto', {}).get('nome'),
+                    }
+                    for item in produtos
+                ]
+        except Exception as e:
+            context['search_error'] = str(e)
+
+    if product_id:
+        # Obter detalhes do produto
+        tiny_search = TinyERPSearch()
+
+        # JSON do produto.obter.php
+        endpoint = f"{tiny_search.api_url}/produto.obter.php"
+        params = {
+            'token': tiny_search.api_token,
+            'formato': 'json',
+            'id': product_id
+        }
+
+        try:
+            response = requests.get(endpoint, params=params, timeout=10)
+            product_json = response.json()
+            context['product_details'] = json_lib.dumps(product_json, indent=2, ensure_ascii=False)
+
+            # Se tiver variações, buscar estoque de cada uma
+            produto = product_json.get('retorno', {}).get('produto', {})
+            variacoes = produto.get('variacoes', [])
+
+            if variacoes:
+                variations_stock = []
+                for variacao in variacoes:
+                    var_id = variacao.get('id')
+                    grade = variacao.get('grade', {})
+
+                    if var_id:
+                        # Buscar estoque da variação
+                        stock_endpoint = f"{tiny_search.api_url}/produto.obter.estoque.php"
+                        stock_params = {
+                            'token': tiny_search.api_token,
+                            'formato': 'json',
+                            'id': var_id
+                        }
+
+                        try:
+                            stock_response = requests.get(stock_endpoint, params=stock_params, timeout=10)
+                            stock_json = stock_response.json()
+
+                            variations_stock.append({
+                                'variation_id': var_id,
+                                'variation_name': grade.get('nome', 'N/A'),
+                                'stock_json': json_lib.dumps(stock_json, indent=2, ensure_ascii=False),
+                            })
+                        except Exception as e:
+                            variations_stock.append({
+                                'variation_id': var_id,
+                                'variation_name': grade.get('nome', 'N/A'),
+                                'error': str(e),
+                            })
+
+                context['variations_stock'] = variations_stock
+
+        except Exception as e:
+            context['product_error'] = str(e)
+
+    return render(request, 'store_collections/tiny_debug.html', context)

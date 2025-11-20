@@ -23,4 +23,6 @@ urlpatterns = [
     path('api/tiny/link/', views.link_tiny_product, name='link_tiny_product'),
     path('api/sync-piece/<int:piece_id>/', views.sync_single_piece, name='sync_single_piece'),
     path('api/sync-all-pieces/', views.sync_all_pieces_endpoint, name='sync_all_pieces'),
+    # Debug
+    path('debug/tiny/', views.tiny_debug, name='tiny_debug'),
 ]

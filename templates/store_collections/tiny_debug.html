@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+
+{% block title %}Debug Tiny ERP - Sistema Seja Sua{% endblock %}
+
+{% block page_title %}Debug Tiny ERP API{% endblock %}
+
+{% block content %}
+<div class="debug-container">
+    <div class="search-section">
+        <h2>Buscar Produto</h2>
+        <form method="get" action="{% url 'store_collections:tiny_debug' %}">
+            <div class="form-group">
+                <label for="search">Termo de Busca:</label>
+                <input type="text" id="search" name="search" value="{{ search_term }}" placeholder="Ex: Nova Era">
+            </div>
+            <button type="submit" class="btn">Buscar</button>
+        </form>
+    </div>
+
+    {% if search_results %}
+    <div class="results-section">
+        <h2>Resultados da Busca</h2>
+
+        {% if products_list %}
+        <div class="products-list">
+            <h3>Produtos Encontrados (clique para ver detalhes)</h3>
+            <ul>
+                {% for produto in products_list %}
+                <li>
+                    <strong>{{ produto.nome }}</strong> (ID: {{ produto.id }})
+                    <a href="?product_id={{ produto.id }}" class="btn-small">Ver Detalhes</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="json-container">
+            <h3>JSON Completo (produtos.pesquisa.php)</h3>
+            <pre>{{ search_results|safe }}</pre>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if search_error %}
+    <div class="error-section">
+        <h3>Erro na Busca</h3>
+        <p>{{ search_error }}</p>
+    </div>
+    {% endif %}
+
+    {% if product_details %}
+    <div class="product-section">
+        <h2>Detalhes do Produto (ID: {{ product_id }})</h2>
+        <div class="json-container">
+            <h3>JSON Completo (produto.obter.php)</h3>
+            <pre>{{ product_details|safe }}</pre>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if variations_stock %}
+    <div class="variations-section">
+        <h2>Estoque das Variações (produto.obter.estoque.php)</h2>
+        {% for var_stock in variations_stock %}
+        <div class="variation-container">
+            <h3>Variação: {{ var_stock.variation_name }} (ID: {{ var_stock.variation_id }})</h3>
+
+            {% if var_stock.stock_json %}
+            <div class="json-container">
+                <h4>JSON da Variação</h4>
+                <pre>{{ var_stock.stock_json|safe }}</pre>
+            </div>
+            {% endif %}
+
+            {% if var_stock.error %}
+            <div class="error-section">
+                <p>Erro: {{ var_stock.error }}</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if product_error %}
+    <div class="error-section">
+        <h3>Erro ao Buscar Produto</h3>
+        <p>{{ product_error }}</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.debug-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.search-section {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid var(--beige-medium);
+    margin-bottom: 2rem;
+}
+
+.search-section h2 {
+    margin-top: 0;
+    color: var(--brown-dark);
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--brown-text);
+    font-weight: 600;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--beige-medium);
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.results-section,
+.product-section,
+.variations-section {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid var(--beige-medium);
+    margin-bottom: 2rem;
+}
+
+.results-section h2,
+.product-section h2,
+.variations-section h2 {
+    margin-top: 0;
+    color: var(--brown-dark);
+}
+
+.json-container {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 1rem;
+    margin: 1rem 0;
+    overflow-x: auto;
+}
+
+.json-container h3,
+.json-container h4 {
+    margin-top: 0;
+    color: var(--brown-dark);
+    font-size: 1rem;
+}
+
+.json-container pre {
+    margin: 0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: #212529;
+}
+
+.products-list,
+.product-info {
+    margin-top: 1.5rem;
+}
+
+.products-list ul {
+    list-style: none;
+    padding: 0;
+}
+
+.products-list li {
+    padding: 0.75rem;
+    border: 1px solid var(--beige-medium);
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.product-info p {
+    margin: 0.5rem 0;
+    color: var(--brown-text);
+}
+
+.product-info h4 {
+    margin-top: 1.5rem;
+    color: var(--brown-dark);
+}
+
+.product-info ul {
+    list-style: none;
+    padding: 0;
+}
+
+.product-info li {
+    padding: 0.5rem;
+    border-left: 3px solid var(--accent-gold);
+    margin-bottom: 0.5rem;
+    background: var(--beige-light);
+}
+
+.variation-container {
+    border: 2px solid var(--accent-gold);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.variation-container h3 {
+    margin-top: 0;
+    color: var(--brown-dark);
+}
+
+.error-section {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 4px;
+    border: 1px solid #f5c6cb;
+    margin: 1rem 0;
+}
+
+.btn-small {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    background: var(--accent-gold);
+    color: var(--brown-dark);
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.btn-small:hover {
+    background: var(--brown-dark);
+    color: var(--white);
+}
+</style>
+
+{% endblock %}
