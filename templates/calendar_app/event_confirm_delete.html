@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir Evento - Sistema Seja Sua{% endblock %}
+
+{% block nav_calendar %}active{% endblock %}
+
+{% block page_title %}Excluir Evento{% endblock %}
+
+{% block content %}
+<div class="confirm-delete-container">
+    <div class="confirm-box">
+        <div class="warning-icon">⚠️</div>
+        <h3>Tem certeza que deseja excluir este evento?</h3>
+
+        <div class="event-info">
+            <p><strong>Título:</strong> {{ event.title }}</p>
+            <p><strong>Data:</strong> {{ event.start_date|date:"d/m/Y" }}</p>
+            {% if event.collection %}
+            <p><strong>Coleção:</strong> {{ event.collection.name }}</p>
+            {% endif %}
+        </div>
+
+        {% if event.sync_enabled and event.google_event_id %}
+        <div class="alert alert-warning">
+            <strong>Atenção:</strong> Este evento também será removido do Google Calendar.
+        </div>
+        {% endif %}
+
+        <form method="post" class="delete-form">
+            {% csrf_token %}
+            <div class="form-actions">
+                <a href="{% url 'calendar_app:calendar_view' %}" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-danger">Sim, Excluir Evento</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.confirm-delete-container {
+    max-width: 600px;
+    margin: 2rem auto;
+}
+
+.confirm-box {
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--beige-medium);
+    padding: 2rem;
+    text-align: center;
+}
+
+.warning-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.confirm-box h3 {
+    color: var(--brown-dark);
+    margin-bottom: 2rem;
+}
+
+.event-info {
+    background: var(--beige-light);
+    padding: 1.5rem;
+    border-radius: 4px;
+    margin: 2rem 0;
+    text-align: left;
+}
+
+.event-info p {
+    margin: 0.5rem 0;
+    color: var(--brown-text);
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+}
+
+.alert-warning {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.delete-form {
+    margin-top: 2rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.btn-secondary {
+    background: var(--beige-medium);
+    color: var(--brown-text);
+}
+
+.btn-secondary:hover {
+    background: var(--beige-dark);
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: var(--white);
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+</style>
+{% endblock %}

@@ -25,6 +25,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('store_collections.urls')),
     path('inventory/', include('inventory.urls')),
+    path('calendar/', include('calendar_app.urls')),
 ]
 
 # Serve media files in development
