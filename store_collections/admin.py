@@ -87,8 +87,12 @@ class PieceAdmin(admin.ModelAdmin):
             )
         }),
         ('Tiny ERP Integration', {
-            'fields': ('tiny_erp_piece',),
-            'description': 'Vincule esta peça com uma peça do Tiny ERP para sincronizar o estoque automaticamente.'
+            'fields': (
+                'tiny_parent_id',
+                ('tiny_variation_id_p', 'tiny_variation_id_m'),
+                ('tiny_variation_id_g', 'tiny_variation_id_gg'),
+            ),
+            'description': 'IDs do produto e variações no Tiny ERP para sincronização de estoque.'
         }),
         ('Current Stock (Synced from Tiny ERP)', {
             'fields': (
@@ -125,7 +129,7 @@ class PieceAdmin(admin.ModelAdmin):
         error_count = 0
 
         for piece in queryset:
-            if piece.tiny_erp_piece:
+            if piece.tiny_parent_id:
                 if sync_service.sync_piece_stock(piece):
                     success_count += 1
                 else:
@@ -136,13 +140,13 @@ class PieceAdmin(admin.ModelAdmin):
         if success_count > 0:
             self.message_user(
                 request,
-                f'Successfully synced stock for {success_count} piece(s).',
+                f'Estoque sincronizado com sucesso para {success_count} peça(s).',
                 level='success'
             )
         if error_count > 0:
             self.message_user(
                 request,
-                f'Failed to sync {error_count} piece(s). Make sure they are linked to Tiny ERP pieces.',
+                f'Falha ao sincronizar {error_count} peça(s). Certifique-se de que estão vinculadas ao Tiny ERP.',
                 level='warning'
             )
 

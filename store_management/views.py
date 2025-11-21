@@ -4,7 +4,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from store_collections.models import Collection, Piece
-from inventory.models import InventoryPiece, InventoryAccessory
+from inventory.models import InventoryAccessory
 from finance.models import FinanceInflow, FinanceOutflow
 from calendar_app.models import CalendarEvent
 from sales_stats.models import SalesData, SalesForecast
@@ -24,7 +24,7 @@ def home(request):
         'pieces_count': Piece.objects.count(),
 
         # Inventory
-        'inventory_pieces_count': InventoryPiece.objects.count(),
+        'inventory_pieces_count': Piece.objects.filter(tiny_parent_id__isnull=False).count(),
         'inventory_accessories_count': InventoryAccessory.objects.count(),
 
         # Finance

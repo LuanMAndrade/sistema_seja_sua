@@ -139,7 +139,7 @@ def piece_saved(sender, instance, created, **kwargs):
     stock_sync_fields = {'current_stock_p', 'current_stock_m', 'current_stock_g', 'current_stock_gg', 'stock_last_synced'}
     is_stock_sync_update = update_fields is not None and set(update_fields) == stock_sync_fields
 
-    if instance.tiny_erp_piece and not is_stock_sync_update:
+    if instance.tiny_parent_id and not is_stock_sync_update:
         # Sync immediately after linking or when piece is updated
         sync_service = TinyERPStockSync()
         sync_service.sync_piece_stock(instance)

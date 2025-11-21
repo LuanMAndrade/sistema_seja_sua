@@ -6,6 +6,7 @@ import os
 import requests
 from decimal import Decimal
 import logging
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -239,72 +240,92 @@ class TinyERPSearch:
         logger.info(f"Final mapped variation stock: {size_stock}")
         return size_stock
 
-    def get_or_create_inventory_piece(self, product_data):
+    def link_piece_to_tiny(self, piece, product_id):
         """
-        Get or create an InventoryPiece from product data
-        Fetches product details including variations
+        Link a Piece to a Tiny ERP product and sync its stock
+        Updates the piece with Tiny parent ID and variation IDs
 
         Args:
-            product_data (dict): Product data from Tiny ERP search
+            piece (Piece): The piece to link
+            product_id (str): Product ID in Tiny ERP
 
         Returns:
-            InventoryPiece: The created or existing inventory piece
+            bool: True if successful, False otherwise
         """
-        from inventory.models import InventoryPiece
-
         try:
-            product_id = product_data['id']
-
             # Fetch detailed product information with variations
             product_details = self.get_product_details(product_id)
 
             if not product_details:
-                # Fallback to basic product data without variations
-                logger.warning(f"Could not fetch details for product {product_id}, using basic data")
-                product_details = {}
+                logger.error(f"Could not fetch details for product {product_id}")
+                return False
+
+            # Store parent product ID
+            piece.tiny_parent_id = product_id
 
             # Get variations
             variacoes = product_details.get('variacoes', [])
             has_variations = len(variacoes) > 0
 
-            # Map sizes
-            size_stock = {'P': 0, 'M': 0, 'G': 0, 'GG': 0}
-            total_quantity = product_data.get('quantity', 0)
-
             if has_variations:
-                size_stock = self.map_size_variations(variacoes)
-                total_quantity = sum(size_stock.values())
-                logger.info(f"Product has {len(variacoes)} variations, total stock: {total_quantity}")
+                logger.info(f"Product has {len(variacoes)} variations")
+
+                # Map variation IDs to sizes
+                variation_ids = {'P': None, 'M': None, 'G': None, 'GG': None}
+                size_stock = {'P': 0, 'M': 0, 'G': 0, 'GG': 0}
+
+                for variation in variacoes:
+                    variation = variation.get('variacao', {})
+                    grade = variation.get('grade', {})
+
+                    # Get size and variation ID
+                    size = grade.get('Tamanho', '').upper().strip()
+                    variation_id = variation.get('id')
+
+                    if not variation_id:
+                        logger.warning(f"Variation '{size}' has no ID, skipping")
+                        continue
+
+                    # Store variation ID
+                    if size in variation_ids:
+                        variation_ids[size] = str(variation_id)
+
+                        # Fetch stock for this variation
+                        stock = self.get_variation_stock(variation_id)
+                        size_stock[size] = stock
+
+                # Update piece with variation IDs
+                piece.tiny_variation_id_p = variation_ids['P']
+                piece.tiny_variation_id_m = variation_ids['M']
+                piece.tiny_variation_id_g = variation_ids['G']
+                piece.tiny_variation_id_gg = variation_ids['GG']
+
+                # Update stock
+                piece.current_stock_p = size_stock['P']
+                piece.current_stock_m = size_stock['M']
+                piece.current_stock_g = size_stock['G']
+                piece.current_stock_gg = size_stock['GG']
+
+                logger.info(
+                    f"Mapped variations: P={variation_ids['P']}, M={variation_ids['M']}, "
+                    f"G={variation_ids['G']}, GG={variation_ids['GG']}"
+                )
+                logger.info(
+                    f"Synced stock: P={size_stock['P']}, M={size_stock['M']}, "
+                    f"G={size_stock['G']}, GG={size_stock['GG']}"
+                )
             else:
-                # No variations, distribute equally or use total
-                logger.info(f"Product has no variations, using total stock: {total_quantity}")
+                # No variations found
+                logger.warning(f"Product {product_id} has no size variations")
 
-            # Create or update inventory piece
-            piece, created = InventoryPiece.objects.update_or_create(
-                external_id=product_id,
-                defaults={
-                    'name': product_data['name'],
-                    'sku': product_data.get('sku', ''),
-                    'category': product_details.get('tipo', ''),
-                    'quantity': total_quantity,
-                    'price': Decimal(str(product_data.get('price', 0))),
-                    'has_variations': has_variations,
-                    'stock_p': size_stock['P'],
-                    'stock_m': size_stock['M'],
-                    'stock_g': size_stock['G'],
-                    'stock_gg': size_stock['GG'],
-                    'variations_data': variacoes if has_variations else None,
-                }
-            )
+            piece.stock_last_synced = timezone.now()
+            piece.save()
 
-            logger.info(
-                f"{'Created' if created else 'Updated'} InventoryPiece: {piece.name} "
-                f"(P:{piece.stock_p}, M:{piece.stock_m}, G:{piece.stock_g}, GG:{piece.stock_gg})"
-            )
-            return piece
+            logger.info(f"Successfully linked piece {piece.id} to Tiny product {product_id}")
+            return True
 
         except Exception as e:
-            logger.error(f"Error creating/updating InventoryPiece: {e}")
+            logger.error(f"Error linking piece to Tiny ERP: {e}")
             import traceback
             logger.error(traceback.format_exc())
-            return None
+            return False

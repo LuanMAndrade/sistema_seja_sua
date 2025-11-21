@@ -54,8 +54,8 @@ class Command(BaseCommand):
 
     def sync_piece(self, sync_service, piece_id, verbose):
         try:
-            piece = Piece.objects.select_related("tiny_erp_piece", "collection").get(pk=piece_id)
-            if not piece.tiny_erp_piece:
+            piece = Piece.objects.select_related("collection", "category").get(pk=piece_id)
+            if not piece.tiny_parent_id:
                 self.stdout.write(self.style.ERROR(f"Piece {piece_id} is not linked to Tiny ERP"))
                 return
             self.stdout.write(f"Syncing: {piece.collection.name} - {piece.category}")
@@ -81,7 +81,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f"Error: {e}"))
 
     def sync_all_pieces(self, sync_service, verbose):
-        pieces = Piece.objects.filter(tiny_erp_piece__isnull=False).select_related("tiny_erp_piece", "collection", "category")
+        pieces = Piece.objects.filter(tiny_parent_id__isnull=False).select_related("collection", "category")
         total = pieces.count()
         if total == 0:
             self.stdout.write(self.style.WARNING("No pieces linked to Tiny ERP found"))

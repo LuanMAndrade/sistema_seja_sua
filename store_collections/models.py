@@ -90,14 +90,36 @@ class Piece(models.Model):
     initial_quantity_g = models.PositiveIntegerField(default=0, verbose_name="Initial Quantity G")
     initial_quantity_gg = models.PositiveIntegerField(default=0, verbose_name="Initial Quantity GG")
 
-    # Tiny ERP Integration
-    tiny_erp_piece = models.ForeignKey(
-        'inventory.InventoryPiece',
-        on_delete=models.SET_NULL,
+    # Tiny ERP Integration - Product IDs
+    tiny_parent_id = models.CharField(
+        max_length=100,
         null=True,
         blank=True,
-        related_name='linked_pieces',
-        help_text="Link to Tiny ERP inventory piece for stock sync"
+        help_text="Parent product ID in Tiny ERP"
+    )
+    tiny_variation_id_p = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        help_text="Variation ID for size P in Tiny ERP"
+    )
+    tiny_variation_id_m = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        help_text="Variation ID for size M in Tiny ERP"
+    )
+    tiny_variation_id_g = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        help_text="Variation ID for size G in Tiny ERP"
+    )
+    tiny_variation_id_gg = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        help_text="Variation ID for size GG in Tiny ERP"
     )
 
     # Current stock (synced from Tiny ERP)
@@ -148,7 +170,7 @@ class Piece(models.Model):
     @property
     def is_synced_with_tiny(self):
         """Check if this piece is linked to Tiny ERP"""
-        return self.tiny_erp_piece is not None
+        return self.tiny_parent_id is not None
 
 
 class PieceColor(models.Model):

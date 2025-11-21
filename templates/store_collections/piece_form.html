@@ -232,7 +232,8 @@
             {% endif %}
         </div>
 
-        <div class="form-section tiny-erp-section">
+        {% if piece %}
+        <div class="form-section tiny-erp-section" data-piece-id="{{ piece.id }}">
             <h3>🔗 Integração com Tiny ERP</h3>
             <p class="section-description">
                 Busque e vincule um produto do Tiny ERP para sincronizar automaticamente o estoque.
@@ -273,18 +274,13 @@
                 </div>
             </div>
 
-            <!-- Hidden field for the actual form submission -->
-            <div style="display: none;">
-                {{ form.tiny_erp_piece }}
-            </div>
-
             <!-- Messages -->
             <div id="tiny_messages"></div>
 
             {% if piece and piece.is_synced_with_tiny %}
             <div class="sync-info">
                 <p><strong>✓ Esta peça está vinculada ao Tiny ERP</strong></p>
-                <p>Produto vinculado: <strong>{{ piece.tiny_erp_piece.name }}</strong></p>
+                <p>ID do Produto: <strong>{{ piece.tiny_parent_id }}</strong></p>
                 {% if piece.stock_last_synced %}
                 <p>Última sincronização: {{ piece.stock_last_synced|date:"d/m/Y H:i" }}</p>
                 <div class="stock-display">
@@ -315,6 +311,7 @@
             </div>
             {% endif %}
         </div>
+        {% endif %}
 
         <div class="form-actions">
             <a href="{% url 'store_collections:pieces_list' %}" class="btn btn-secondary">Cancelar</a>
@@ -832,7 +829,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const productSelector = document.getElementById('product_selector');
     const linkBtn = document.getElementById('link_product_btn');
     const messagesDiv = document.getElementById('tiny_messages');
-    const hiddenSelect = document.getElementById('{{ form.tiny_erp_piece.id_for_label }}');
 
     let searchResults = [];
 
@@ -938,6 +934,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Get CSRF token
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
+        // Get piece ID from data attribute
+        const tinySection = document.querySelector('.tiny-erp-section');
+        const pieceId = tinySection.dataset.pieceId;
+
         // Make AJAX request to link product
         fetch(`{% url 'store_collections:link_tiny_product' %}`, {
             method: 'POST',
@@ -946,7 +946,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 'X-CSRFToken': csrfToken
             },
             body: JSON.stringify({
-                product: selectedProduct
+                product: selectedProduct,
+                piece_id: pieceId
             })
         })
         .then(response => response.json())
@@ -955,17 +956,19 @@ document.addEventListener('DOMContentLoaded', function() {
             linkBtn.textContent = '✓ Vincular Produto Selecionado';
 
             if (data.success) {
-                // Update hidden select with the inventory piece ID
-                hiddenSelect.value = data.inventory_piece_id;
-
                 showMessage(
-                    `✓ Produto "${data.inventory_piece_name}" vinculado com sucesso! Salve o formulário para confirmar.`,
+                    `✓ ${data.message} Recarregue a página para ver as atualizações.`,
                     'success'
                 );
 
                 // Hide search results
                 resultsDiv.style.display = 'none';
                 searchInput.value = '';
+
+                // Optionally reload page after 2 seconds
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
             } else {
                 showMessage(data.error || 'Erro ao vincular produto', 'error');
             }

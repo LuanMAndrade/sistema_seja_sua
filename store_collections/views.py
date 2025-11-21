@@ -363,13 +363,14 @@ def sync_all_pieces_endpoint(request):
 def link_tiny_product(request):
     """
     AJAX endpoint to link a Tiny ERP product to a piece
-    Creates/updates InventoryPiece and returns its ID
+    Links the piece with Tiny product and syncs variation IDs
     """
     import json
 
     try:
         data = json.loads(request.body)
         product_data = data.get('product')
+        piece_id = data.get('piece_id')
 
         if not product_data:
             return JsonResponse({
@@ -377,20 +378,44 @@ def link_tiny_product(request):
                 'error': 'Dados do produto não fornecidos'
             }, status=400)
 
-        tiny_search = TinyERPSearch()
-        inventory_piece = tiny_search.get_or_create_inventory_piece(product_data)
+        if not piece_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'ID da peça não fornecido'
+            }, status=400)
 
-        if inventory_piece:
+        # Get the piece
+        try:
+            piece = Piece.objects.get(pk=piece_id)
+        except Piece.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Peça não encontrada'
+            }, status=404)
+
+        # Link piece to Tiny product
+        tiny_search = TinyERPSearch()
+        product_id = product_data.get('id')
+
+        if not product_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'ID do produto não encontrado'
+            }, status=400)
+
+        success = tiny_search.link_piece_to_tiny(piece, product_id)
+
+        if success:
             return JsonResponse({
                 'success': True,
-                'inventory_piece_id': inventory_piece.id,
-                'inventory_piece_name': inventory_piece.name,
-                'message': 'Produto vinculado com sucesso!'
+                'product_name': product_data.get('name', 'Produto'),
+                'tiny_parent_id': piece.tiny_parent_id,
+                'message': 'Produto vinculado e estoque sincronizado com sucesso!'
             })
         else:
             return JsonResponse({
                 'success': False,
-                'error': 'Erro ao criar/atualizar produto no inventário'
+                'error': 'Erro ao vincular produto ao Tiny ERP'
             }, status=500)
 
     except json.JSONDecodeError:
@@ -399,6 +424,8 @@ def link_tiny_product(request):
             'error': 'Dados JSON inválidos'
         }, status=400)
     except Exception as e:
+        import traceback
+        print(traceback.format_exc())
         return JsonResponse({
             'success': False,
             'error': f'Erro ao vincular produto: {str(e)}'
