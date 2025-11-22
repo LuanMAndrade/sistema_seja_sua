@@ -199,3 +199,43 @@ class PieceImage(models.Model):
 
     def __str__(self):
         return f"{self.piece} - Image {self.id}"
+
+
+class StockHistory(models.Model):
+    """
+    Historical record of stock movements
+    Only saves when there is actual stock change (entrada/saída)
+    """
+    MOVEMENT_TYPES = [
+        ('entrada', 'Entrada'),
+        ('saida', 'Saída'),
+        ('inicial', 'Estoque Inicial'),
+    ]
+
+    SIZE_CHOICES = [
+        ('P', 'P'),
+        ('M', 'M'),
+        ('G', 'G'),
+        ('GG', 'GG'),
+    ]
+
+    piece = models.ForeignKey(Piece, on_delete=models.CASCADE, related_name='stock_history')
+    size = models.CharField(max_length=2, choices=SIZE_CHOICES)
+    quantity = models.PositiveIntegerField(help_text="Quantidade movimentada")
+    movement_type = models.CharField(max_length=10, choices=MOVEMENT_TYPES)
+    stock_after_movement = models.PositiveIntegerField(help_text="Estoque após a movimentação")
+    date = models.DateTimeField(help_text="Data e hora da movimentação")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date', '-created_at']
+        indexes = [
+            models.Index(fields=['piece', 'size', 'date']),
+            models.Index(fields=['date']),
+            models.Index(fields=['movement_type']),
+        ]
+        verbose_name = "Histórico de Estoque"
+        verbose_name_plural = "Históricos de Estoque"
+
+    def __str__(self):
+        return f"{self.piece.name} ({self.size}) - {self.movement_type} {self.quantity} em {self.date.strftime('%d/%m/%Y')}"

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Fabric, Collection, Piece, PieceColor, PieceImage
+from .models import Fabric, Collection, Piece, PieceColor, PieceImage, StockHistory
 
 
 @admin.register(Fabric)
@@ -165,3 +165,25 @@ class PieceImageAdmin(admin.ModelAdmin):
     list_display = ['piece', 'caption', 'uploaded_at']
     search_fields = ['piece__collection__name', 'caption']
     list_filter = ['uploaded_at']
+
+
+@admin.register(StockHistory)
+class StockHistoryAdmin(admin.ModelAdmin):
+    list_display = ['piece', 'size', 'movement_type', 'quantity', 'stock_after_movement', 'date']
+    search_fields = ['piece__name', 'piece__collection__name']
+    list_filter = ['movement_type', 'size', 'date']
+    date_hierarchy = 'date'
+    readonly_fields = ['piece', 'size', 'quantity', 'movement_type', 'stock_after_movement', 'date', 'created_at']
+    ordering = ['-date', '-created_at']
+
+    def has_add_permission(self, request):
+        # Histórico não pode ser adicionado manualmente
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # Histórico não pode ser deletado (apenas via sistema)
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        # Histórico não pode ser editado (read-only)
+        return False

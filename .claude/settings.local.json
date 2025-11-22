@@ -4,7 +4,9 @@
       "Bash(python:*)",
       "Bash(powershell -Command \"(Get-Content piece_form.html | Measure-Object -Line).Lines\")",
       "Bash(python3:*)",
-      "Bash(./venv/bin/python:*)"
+      "Bash(./venv/bin/python:*)",
+      "Bash(./venv/bin/pip install:*)",
+      "Bash(redis-cli ping:*)"
     ],
     "deny": [],
     "ask": []
