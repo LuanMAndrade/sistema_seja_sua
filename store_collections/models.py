@@ -9,6 +9,7 @@ class Fabric(models.Model):
     supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT, related_name='fabrics')
     roll_weight_kg = models.DecimalField(max_digits=10, decimal_places=2, help_text="Weight of roll in kg")
     yield_area_per_kg = models.DecimalField(max_digits=10, decimal_places=2, help_text="Area per kg (m²/kg)")
+    price_per_roll = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Preço por Rolo (R$)")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -63,6 +64,11 @@ class Piece(models.Model):
         ('approved', 'Approved'),
     ]
 
+    LAUNCH_STATUS_CHOICES = [
+        ('em_lancamento', 'Em Lançamento'),
+        ('lancada', 'Lançada'),
+    ]
+
     SIZE_CHOICES = [
         ('P', 'P'),
         ('M', 'M'),
@@ -75,14 +81,24 @@ class Piece(models.Model):
     category = models.ForeignKey(PieceCategory, on_delete=models.PROTECT)
     fabric = models.ForeignKey(Fabric, on_delete=models.PROTECT)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    launch_status = models.CharField(
+        max_length=20,
+        choices=LAUNCH_STATUS_CHOICES,
+        default='em_lancamento',
+        verbose_name="Status de Lançamento"
+    )
+    active_for_replenishment = models.BooleanField(
+        default=True,
+        verbose_name="Ativa para Reposição"
+    )
     sale_price = models.DecimalField(max_digits=10, decimal_places=2)
     total_cost = models.DecimalField(max_digits=10, decimal_places=2)
 
-    # Fabric consumption per size (in square meters or similar unit)
-    fabric_consumption_p = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Fabric Consumption P")
-    fabric_consumption_m = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Fabric Consumption M")
-    fabric_consumption_g = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Fabric Consumption G")
-    fabric_consumption_gg = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Fabric Consumption GG")
+    # Fabric consumption per size (in square meters m²)
+    fabric_consumption_p = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Consumo de Tecido P (m²)")
+    fabric_consumption_m = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Consumo de Tecido M (m²)")
+    fabric_consumption_g = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Consumo de Tecido G (m²)")
+    fabric_consumption_gg = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Consumo de Tecido GG (m²)")
 
     # Initial quantity per size
     initial_quantity_p = models.PositiveIntegerField(default=0, verbose_name="Initial Quantity P")

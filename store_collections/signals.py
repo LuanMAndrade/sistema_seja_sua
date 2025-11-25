@@ -2,7 +2,7 @@ from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.utils import timezone
 from datetime import timedelta
-from .models import Collection, Piece
+from .models import Collection, Piece, StockHistory
 from calendar_app.models import CalendarEvent
 
 
@@ -170,3 +170,16 @@ def piece_saved(sender, instance, created, **kwargs):
     if not stats_created:
         collection_stats.total_pieces_in_collection = pieces_count
         collection_stats.save()
+
+
+@receiver(post_save, sender=StockHistory)
+def stock_history_saved(sender, instance, created, **kwargs):
+    """
+    Triggered when a StockHistory entry is saved.
+    Changes piece launch_status from 'em_lancamento' to 'lancada' when there's a stock entry.
+    """
+    if created and instance.movement_type == 'entrada':
+        piece = instance.piece
+        if piece.launch_status == 'em_lancamento':
+            piece.launch_status = 'lancada'
+            piece.save(update_fields=['launch_status'])

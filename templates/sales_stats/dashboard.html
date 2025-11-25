@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Estatísticas - Sistema Seja Sua{% endblock %}
+{% block nav_statistics %}active{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <h1>📊 Estatísticas</h1>
+    <p class="subtitle">Análise de vendas e reposição de estoque</p>
+</div>
+
+<div class="page-content">
+    <div class="card">
+        <div class="card-header">
+            <h2>Números de Reposição</h2>
+        </div>
+        <div class="card-body">
+            <p>Calcule as quantidades necessárias para reposição de peças baseado nas vendas dos últimos 120 dias.</p>
+            <p class="info-text">
+                <strong>Como funciona:</strong><br>
+                • Peças "Em Lançamento": reposição exata da quantidade inicial<br>
+                • Peças "Lançadas": estoque mínimo de 5 unidades + vendas do período<br>
+                • Cálculo automático de rolos de tecido necessários<br>
+                • Distribuição do tecido sobressalente (do arredondamento) entre as peças
+            </p>
+
+            <form method="post" action="{% url 'sales_stats:generate_replenishment' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary btn-large">
+                    🔄 Gerar Números de Reposição
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Outras Estatísticas</h2>
+        </div>
+        <div class="card-body">
+            <div class="stats-links">
+                <a href="/admin/sales_stats/salesdata/" class="stats-link">
+                    <span class="icon">📊</span>
+                    <span>Dados de Vendas</span>
+                </a>
+                <a href="/admin/sales_stats/salesforecast/" class="stats-link">
+                    <span class="icon">📈</span>
+                    <span>Previsão de Vendas</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.info-text {
+    background-color: var(--beige-light);
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    line-height: 1.8;
+}
+
+.btn-large {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    margin-top: 1rem;
+}
+
+.stats-links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.stats-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background-color: var(--beige-light);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--brown-text);
+    transition: all 0.3s ease;
+}
+
+.stats-link:hover {
+    background-color: var(--beige-medium);
+    transform: translateY(-2px);
+}
+
+.stats-link .icon {
+    font-size: 1.5rem;
+}
+</style>
+{% endblock %}

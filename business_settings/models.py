@@ -19,6 +19,13 @@ class PieceCategory(models.Model):
     """Categories for clothing pieces"""
     name = models.CharField(max_length=200)
     subcategory = models.CharField(max_length=200, blank=True, null=True)
+    production_cost_per_piece = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name="Custo de Produção por Peça (R$)",
+        help_text="Custo médio de produção por peça desta categoria"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

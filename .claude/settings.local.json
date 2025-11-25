@@ -6,7 +6,8 @@
       "Bash(python3:*)",
       "Bash(./venv/bin/python:*)",
       "Bash(./venv/bin/pip install:*)",
-      "Bash(redis-cli ping:*)"
+      "Bash(redis-cli ping:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []

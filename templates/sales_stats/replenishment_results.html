@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Números de Reposição - Sistema Seja Sua{% endblock %}
+{% block nav_statistics %}active{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <h1>📊 Números de Reposição</h1>
+    <p class="subtitle">Resultados calculados com base nos últimos 120 dias</p>
+    <a href="{% url 'sales_stats:dashboard' %}" class="btn btn-secondary">← Voltar</a>
+</div>
+
+<div class="page-content">
+    <!-- Fabric Rolls Section -->
+    <div class="card">
+        <div class="card-header">
+            <h2>🧵 Rolos de Tecido Necessários</h2>
+        </div>
+        <div class="card-body">
+            {% if fabric_rolls %}
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Tecido</th>
+                            <th>Quantidade de Rolos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fabric, rolls in fabric_rolls.items %}
+                        <tr>
+                            <td>
+                                <strong>{{ fabric.name }}</strong> - {{ fabric.color }}
+                            </td>
+                            <td class="highlight-cell">{{ rolls }} rolo{{ rolls|pluralize }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="no-data">Nenhum tecido necessário para reposição.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pieces Replenishment Section -->
+    <div class="card">
+        <div class="card-header">
+            <h2>👗 Peças para Reposição (por Variação)</h2>
+        </div>
+        <div class="card-body">
+            {% if pieces_replenishment %}
+                {% for piece, sizes in pieces_replenishment.items %}
+                <div class="piece-replenishment">
+                    <h3 class="piece-title">
+                        {{ piece.name }}
+                        <span class="badge">{{ piece.fabric.name }} - {{ piece.fabric.color }}</span>
+                        <span class="badge {% if piece.launch_status == 'em_lancamento' %}badge-warning{% else %}badge-success{% endif %}">
+                            {{ piece.get_launch_status_display }}
+                        </span>
+                    </h3>
+                    <table class="sizes-table">
+                        <thead>
+                            <tr>
+                                <th>Tamanho</th>
+                                <th>Quantidade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for size, quantity in sizes.items %}
+                            <tr>
+                                <td><strong>{{ size }}</strong></td>
+                                <td class="quantity-cell">{{ quantity }} unidade{{ quantity|pluralize }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="no-data">Nenhuma peça precisa de reposição no momento.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Cost Summary Section -->
+    <div class="card cost-summary">
+        <div class="card-header">
+            <h2>💰 Resumo de Custos</h2>
+        </div>
+        <div class="card-body">
+            <table class="cost-table">
+                <tbody>
+                    <tr>
+                        <td class="cost-label">Custo de Tecidos:</td>
+                        <td class="cost-value">R$ {{ fabric_cost|floatformat:2 }}</td>
+                    </tr>
+                    <tr>
+                        <td class="cost-label">Custo de Produção:</td>
+                        <td class="cost-value">R$ {{ production_cost|floatformat:2 }}</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td class="cost-label"><strong>TOTAL GASTO:</strong></td>
+                        <td class="cost-value total"><strong>R$ {{ total_cost|floatformat:2 }}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="info-box">
+                📊 <strong>Resumo:</strong> {{ total_pieces_count }} peça{{ total_pieces_count|pluralize }} para reposição
+            </p>
+        </div>
+    </div>
+
+    <div class="actions">
+        <a href="{% url 'sales_stats:dashboard' %}" class="btn btn-primary">🔄 Gerar Novamente</a>
+        <button onclick="window.print()" class="btn btn-secondary">🖨️ Imprimir</button>
+    </div>
+</div>
+
+<style>
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.data-table th,
+.data-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--beige-medium);
+}
+
+.data-table th {
+    background-color: var(--beige-medium);
+    font-weight: 600;
+    color: var(--brown-text);
+}
+
+.data-table tbody tr:hover {
+    background-color: var(--beige-light);
+}
+
+.highlight-cell {
+    font-weight: 700;
+    color: var(--accent-gold);
+    font-size: 1.1rem;
+}
+
+.piece-replenishment {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background-color: var(--beige-light);
+    border-radius: 8px;
+}
+
+.piece-title {
+    margin: 0 0 1rem 0;
+    color: var(--brown-text);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    background-color: var(--beige-medium);
+    font-weight: normal;
+}
+
+.badge-warning {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.badge-success {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.sizes-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.sizes-table th,
+.sizes-table td {
+    padding: 0.5rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--beige-medium);
+}
+
+.sizes-table th {
+    background-color: #fff;
+    font-weight: 600;
+}
+
+.quantity-cell {
+    font-weight: 600;
+    color: var(--accent-gold);
+}
+
+.no-data {
+    text-align: center;
+    padding: 2rem;
+    color: var(--brown-text);
+    opacity: 0.7;
+}
+
+.actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.cost-summary {
+    margin-top: 2rem;
+    border: 2px solid var(--accent-gold);
+}
+
+.cost-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.cost-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--beige-medium);
+}
+
+.cost-label {
+    font-size: 1.1rem;
+    color: var(--brown-text);
+}
+
+.cost-value {
+    text-align: right;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--brown-text);
+}
+
+.total-row {
+    background-color: var(--beige-light);
+}
+
+.total-row .cost-label,
+.total-row .cost-value {
+    font-size: 1.3rem;
+    padding: 1.5rem 1rem;
+}
+
+.cost-value.total {
+    color: var(--accent-gold);
+    font-size: 1.5rem;
+}
+
+.info-box {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: var(--beige-light);
+    border-radius: 8px;
+    text-align: center;
+}
+
+@media print {
+    .content-header a,
+    .actions {
+        display: none;
+    }
+}
+</style>
+{% endblock %}

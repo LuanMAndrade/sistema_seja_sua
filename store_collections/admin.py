@@ -23,7 +23,7 @@ class PieceInline(admin.StackedInline):
     model = Piece
     extra = 0
     fields = [
-        'name', 'category', 'fabric', 'status', 'sale_price', 'total_cost',
+        'name', 'category', 'fabric', 'status', 'launch_status', 'active_for_replenishment', 'sale_price', 'total_cost',
         ('fabric_consumption_p', 'fabric_consumption_m', 'fabric_consumption_g', 'fabric_consumption_gg'),
         ('initial_quantity_p', 'initial_quantity_m', 'initial_quantity_g', 'initial_quantity_gg'),
         'accessories'
@@ -59,17 +59,17 @@ class CollectionAdmin(admin.ModelAdmin):
 
 @admin.register(Piece)
 class PieceAdmin(admin.ModelAdmin):
-    list_display = ['name', 'collection', 'category', 'fabric', 'status', 'sale_price', 'total_cost', 'margin',
-                    'is_synced_with_tiny', 'total_current_stock', 'stock_last_synced']
+    list_display = ['name', 'collection', 'category', 'fabric', 'status', 'launch_status', 'active_for_replenishment',
+                    'sale_price', 'total_cost', 'margin', 'is_synced_with_tiny', 'total_current_stock', 'stock_last_synced']
     search_fields = ['name', 'collection__name', 'category__name']
-    list_filter = ['status', 'collection', 'category', 'created_at']
+    list_filter = ['status', 'launch_status', 'active_for_replenishment', 'collection', 'category', 'created_at']
     inlines = [PieceColorInline, PieceImageInline]
     filter_horizontal = ['accessories']
     actions = ['sync_stock_from_tiny']
 
     fieldsets = (
         ('Basic Information', {
-            'fields': ('name', 'collection', 'category', 'fabric', 'status')
+            'fields': ('name', 'collection', 'category', 'fabric', 'status', 'launch_status', 'active_for_replenishment')
         }),
         ('Pricing', {
             'fields': ('sale_price', 'total_cost')

@@ -106,6 +106,12 @@
                         <span class="section-title">Estatísticas</span>
                     </li>
                     <li>
+                        <a href="{% url 'sales_stats:dashboard' %}" class="{% block nav_statistics %}{% endblock %}">
+                            <span class="icon">🔄</span>
+                            <span>Reposição de Estoque</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="/admin/sales_stats/salesdata/" class="{% block nav_sales %}{% endblock %}">
                             <span class="icon">📊</span>
                             <span>Dados de Vendas</span>
